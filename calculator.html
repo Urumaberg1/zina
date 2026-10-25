@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Calculator - Connectify Exam Project</title>
+    <style>
+        :root {
+            --bg: #f3f6f9;
+            --card: #ffffff;
+            --text: #0f1419;
+            --text-secondary: #536471;
+            --border: #e1e8ed;
+            --border-light: #eff3f4;
+            --hover-bg: #f0f3f6;
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --shadow: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 20px 48px rgba(0,0,0,0.14);
+            --radius: 14px;
+        }
+        body.dark-mode {
+            --bg: #0b0e14;
+            --card: #151921;
+            --text: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border: #232936;
+            --border-light: #1c222d;
+            --hover-bg: #1e2430;
+            --primary: #3b82f6;
+            --primary-light: rgba(59, 130, 246, 0.15);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.25s, color 0.25s;
+        }
+        .navbar {
+            height: 60px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            box-shadow: var(--shadow);
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 800;
+            font-size: 19px;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            border: 1px solid var(--border);
+            background: var(--hover-bg);
+            color: var(--text);
+            font-size: 13.5px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .container {
+            max-width: 960px;
+            margin: 36px auto;
+            padding: 0 20px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 28px;
+        }
+        @media (max-width: 820px) {
+            .container { grid-template-columns: 1fr; }
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+        .calc-title-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .exam-tag {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            color: white;
+        }
+        .calc-screen {
+            background: var(--hover-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .screen-expr {
+            font-size: 14px;
+            color: var(--text-secondary);
+            min-height: 20px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .screen-val {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-top: 6px;
+            overflow-x: auto;
+        }
+        .sci-keys {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed var(--border);
+        }
+        .std-keys {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .btn-k {
+            height: 52px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-k:hover { background: var(--hover-bg); transform: translateY(-1px); }
+        .btn-k:active { transform: scale(0.97); }
+        .btn-k.op {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 20px;
+        }
+        .btn-k.op:hover { background: var(--primary); color: white; }
+        .btn-k.func { background: var(--hover-bg); color: var(--text-secondary); font-size: 15px; }
+        .btn-k.sci {
+            height: 38px;
+            font-size: 13px;
+            background: var(--hover-bg);
+            color: var(--text-secondary);
+        }
+        .btn-k.sci:hover { background: var(--primary-light); color: var(--primary); }
+        .btn-k.eq {
+            background: linear-gradient(135deg, #2563eb, #8b5cf6);
+            color: white;
+            border: none;
+            font-size: 24px;
+            font-weight: 700;
+            box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+        }
+        .btn-k.eq:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(37,99,235,0.45); }
+        .calc-bottom-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+        .action-b {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--hover-bg);
+            color: var(--text);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .action-b:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 480px;
+            overflow-y: auto;
+            margin-top: 14px;
+        }
+        .hist-item {
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--hover-bg);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .hist-item:hover { background: var(--border-light); }
+        .hist-expr { font-size: 12px; color: var(--text-secondary); }
+        .hist-res { font-size: 15px; font-weight: 700; color: var(--primary); text-align: right; }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #111827;
+            color: white;
+            padding: 10px 22px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 99999;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="nav-logo">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="url(#calc-logo-grad)"><defs><linearGradient id="calc-logo-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2563eb"/><stop offset="50%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><circle cx="12" cy="12" r="10"/><path d="M12 6a6 6 0 00-6 6c0 2.97 2.16 5.43 5 5.91V13.5H9.5V11.5H11v-1.5c0-1.5 1-2.5 2.5-2.5h1.5v2h-1c-.5 0-.8.4-.8.8v1.2h2l-.5 2h-1.5v4.41c2.84-.48 5-2.94 5-5.91a6 6 0 00-6-6z" fill="#fff"/></svg>
+        Connectify
+    </a>
+    <div class="nav-links">
+        <a href="index.html" class="nav-btn">🏠 Home Feed</a>
+        <a href="profile.html" class="nav-btn">👤 My Profile</a>
+        <button class="nav-btn" onclick="toggleDarkMode()">🌓 Toggle Theme</button>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card">
+        <div class="calc-title-bar">
+            <div>
+                <h2 style="font-size:20px;display:flex;align-items:center;gap:8px;">
+                    🧮 Interactive Web Calculator
+                </h2>
+                <span style="font-size:12.5px;color:var(--text-secondary);">Web Programming Practical Exam Requirement</span>
+            </div>
+            <span class="exam-tag">Fixed Web Calculator</span>
+        </div>
+
+        <div class="calc-screen">
+            <div class="screen-expr" id="screenExpr"></div>
+            <div class="screen-val" id="screenVal">0</div>
+        </div>
+
+        <div class="sci-keys">
+            <button class="btn-k sci" onclick="calcSci('sin')">sin</button>
+            <button class="btn-k sci" onclick="calcSci('cos')">cos</button>
+            <button class="btn-k sci" onclick="calcSci('tan')">tan</button>
+            <button class="btn-k sci" onclick="calcSci('sqrt')">√x</button>
+            <button class="btn-k sci" onclick="calcSci('sqr')">x²</button>
+            <button class="btn-k sci" onclick="calcSci('inv')">1/x</button>
+            <button class="btn-k sci" onclick="calcSci('pi')">π</button>
+            <button class="btn-k sci" onclick="calcInput('(')">(</button>
+            <button class="btn-k sci" onclick="calcInput(')')">)</button>
+            <button class="btn-k sci" onclick="calcInput('%')">%</button>
+        </div>
+
+        <div class="std-keys">
+            <button class="btn-k func" onclick="calcClearAll()">C</button>
+            <button class="btn-k func" onclick="calcClearEntry()">CE</button>
+            <button class="btn-k func" onclick="calcBackspace()">⌫</button>
+            <button class="btn-k op" onclick="calcOperator('/')">÷</button>
+
+            <button class="btn-k" onclick="calcInput('7')">7</button>
+            <button class="btn-k" onclick="calcInput('8')">8</button>
+            <button class="btn-k" onclick="calcInput('9')">9</button>
+            <button class="btn-k op" onclick="calcOperator('*')">×</button>
+
+            <button class="btn-k" onclick="calcInput('4')">4</button>
+            <button class="btn-k" onclick="calcInput('5')">5</button>
+            <button class="btn-k" onclick="calcInput('6')">6</button>
+            <button class="btn-k op" onclick="calcOperator('-')">−</button>
+
+            <button class="btn-k" onclick="calcInput('1')">1</button>
+            <button class="btn-k" onclick="calcInput('2')">2</button>
+            <button class="btn-k" onclick="calcInput('3')">3</button>
+            <button class="btn-k op" onclick="calcOperator('+')">+</button>
+
+            <button class="btn-k func" onclick="calcNegate()">±</button>
+            <button class="btn-k" onclick="calcInput('0')">0</button>
+            <button class="btn-k" onclick="calcInput('.')">.</button>
+            <button class="btn-k eq" onclick="calcCalculate()">=</button>
+        </div>
+
+        <div class="calc-bottom-bar">
+            <button class="action-b" onclick="copyResult()">📋 Copy Result</button>
+            <button class="action-b" onclick="shareToFeed()">📝 Share to Social Feed</button>
+            <button class="action-b" onclick="location.href='index.html'">💬 Send to Messenger</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="font-size:16px;">📜 Calculation Tape</h3>
+            <button style="border:none;background:none;color:var(--text-secondary);cursor:pointer;font-size:12px;" onclick="clearTape()">Clear Tape</button>
+        </div>
+        <div class="history-list" id="tapeList"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+let expression = '';
+let currentVal = '0';
+let evaluated = false;
+let historyTape = [];
+
+const THEME_KEY = 'connectify_theme';
+function initTheme() {
+    const cur = localStorage.getItem(THEME_KEY) || 'light';
+    document.body.classList.toggle('dark-mode', cur === 'dark');
+}
+function toggleDarkMode() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+    showToast(`Switched to ${isDark ? 'Dark' : 'White'} Mode`);
+}
+
+function updateScreen() {
+    document.getElementById('screenExpr').textContent = expression;
+    document.getElementById('screenVal').textContent = currentVal;
+}
+
+function calcInput(c) {
+    if (evaluated) {
+        if (!isNaN(c) || c === '.') {
+            currentVal = '0';
+            expression = '';
+        }
+        evaluated = false;
+    }
+    if (c === '.') {
+        if (currentVal.includes('.')) return;
+        currentVal += '.';
+    } else if (c === '(' || c === ')') {
+        currentVal = (currentVal === '0') ? c : currentVal + c;
+    } else {
+        currentVal = (currentVal === '0' || currentVal === 'Error') ? c : currentVal + c;
+    }
+    updateScreen();
+}
+
+function calcOperator(op) {
+    const sym = op === '*' ? '×' : (op === '/' ? '÷' : op);
+    if (evaluated) {
+        expression = currentVal + ' ' + sym + ' ';
+        evaluated = false;
+    } else {
+        expression += (currentVal || '0') + ' ' + sym + ' ';
+    }
+    currentVal = '0';
+    updateScreen();
+}
+
+function calcCalculate() {
+    try {
+        let full = (expression + currentVal).trim();
+        if (!full) return;
+        let sanitized = full.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+        if (!/^[0-9+\-*/().\s%]+$/.test(sanitized)) {
+            currentVal = 'Error';
+            updateScreen();
+            return;
+        }
+        sanitized = sanitized.replace(/([0-9.]+)%/g, '($1/100)');
+        const res = Function('"use strict"; return (' + sanitized + ')')();
+        if (!isFinite(res)) {
+            currentVal = 'Cannot divide by 0';
+        } else {
+            currentVal = String(Math.round(res * 100000000) / 100000000);
+            historyTape.unshift({ expr: full, res: currentVal });
+            localStorage.setItem('socialvibe_calc_history', JSON.stringify(historyTape));
+            renderTape();
+        }
+        expression = full + ' =';
+        evaluated = true;
+    } catch(e) {
+        currentVal = 'Error';
+    }
+    updateScreen();
+}
+
+function calcClearAll() {
+    expression = '';
+    currentVal = '0';
+    evaluated = false;
+    updateScreen();
+}
+
+function calcClearEntry() {
+    currentVal = '0';
+    updateScreen();
+}
+
+function calcBackspace() {
+    if (evaluated) { calcClearAll(); return; }
+    currentVal = (currentVal.length > 1) ? currentVal.slice(0, -1) : '0';
+    updateScreen();
+}
+
+function calcNegate() {
+    if (currentVal === '0' || currentVal === 'Error') return;
+    currentVal = currentVal.startsWith('-') ? currentVal.substring(1) : '-' + currentVal;
+    updateScreen();
+}
+
+function calcSci(fn) {
+    const val = parseFloat(currentVal);
+    if (isNaN(val)) return;
+    let r = 0, exp = '';
+    switch(fn) {
+        case 'sin': r = Math.sin(val * Math.PI / 180); exp = `sin(${val}°)`; break;
+        case 'cos': r = Math.cos(val * Math.PI / 180); exp = `cos(${val}°)`; break;
+        case 'tan': r = Math.tan(val * Math.PI / 180); exp = `tan(${val}°)`; break;
+        case 'sqrt':
+            if (val < 0) { currentVal = 'Invalid Input'; updateScreen(); return; }
+            r = Math.sqrt(val); exp = `√(${val})`; break;
+        case 'sqr': r = Math.pow(val, 2); exp = `sqr(${val})`; break;
+        case 'inv':
+            if (val === 0) { currentVal = 'Cannot divide by 0'; updateScreen(); return; }
+            r = 1 / val; exp = `1/(${val})`; break;
+        case 'pi': r = Math.PI; exp = 'π'; break;
+    }
+    currentVal = String(Math.round(r * 100000000) / 100000000);
+    expression = exp + ' =';
+    evaluated = true;
+    updateScreen();
+}
+
+function renderTape() {
+    const list = document.getElementById('tapeList');
+    if (!list) return;
+    if (historyTape.length === 0) {
+        list.innerHTML = '<div style="font-size:13px;color:var(--text-secondary);text-align:center;padding:20px;">No calculations yet</div>';
+        return;
+    }
+    list.innerHTML = historyTape.map(item => `
+        <div class="hist-item" onclick="loadTapeItem('${escapeHtml(item.res)}')">
+            <div class="hist-expr">${escapeHtml(item.expr)}</div>
+            <div class="hist-res">= ${escapeHtml(item.res)}</div>
+        </div>
+    `).join('');
+}
+
+function loadTapeItem(val) {
+    currentVal = val;
+    expression = '';
+    evaluated = true;
+    updateScreen();
+}
+
+function clearTape() {
+    historyTape = [];
+    localStorage.removeItem('socialvibe_calc_history');
+    renderTape();
+    showToast('Tape cleared 🧹');
+}
+
+function copyResult() {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(currentVal);
+    }
+    showToast(`Copied ${currentVal} 📋`);
+}
+
+function shareToFeed() {
+    const full = expression ? `${expression} ${currentVal}` : `Calculated: ${currentVal}`;
+    const posts = JSON.parse(localStorage.getItem('socialvibe_posts') || '[]');
+    const me = JSON.parse(localStorage.getItem('socialvibe_profile') || '{"name":"User Name","avatar":"https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"}');
+    
+    posts.unshift({
+        id: Date.now(),
+        author: me.name,
+        avatar: me.avatar,
+        time: 'Just now',
+        text: `🧮 Web Calculator Result:\n${full}`,
+        likes: 0,
+        liked: false,
+        comments: [],
+        shares: 0,
+        isOwn: true
+    });
+    localStorage.setItem('socialvibe_posts', JSON.stringify(posts));
+    showToast('Result published to Connectify feed! 🚀');
+    setTimeout(() => location.href = 'index.html', 1000);
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function escapeHtml(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+window.addEventListener('keydown', (e) => {
+    if (!isNaN(e.key)) calcInput(e.key);
+    else if (['+', '-', '*', '/'].includes(e.key)) calcOperator(e.key);
+    else if (e.key === 'Enter' || e.key === '=') { e.preventDefault(); calcCalculate(); }
+    else if (e.key === 'Backspace') calcBackspace();
+    else if (e.key === 'Escape') calcClearAll();
+    else if (e.key === '.') calcInput('.');
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    try {
+        const stored = localStorage.getItem('socialvibe_calc_history');
+        if (stored) historyTape = JSON.parse(stored);
+    } catch(e) {}
+    renderTape();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connectify - Practical Exam Project Presentation (Print Ready)</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 16mm;
+        }
+        :root {
+            --primary: #2563eb;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #cbd5e1;
+            --bg: #f8fafc;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
+            background: #e2e8f0;
+            line-height: 1.6;
+            padding: 30px 10px;
+        }
+        .paper {
+            max-width: 860px;
+            margin: 0 auto 30px;
+            background: #ffffff;
+            padding: 40px 48px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            page-break-after: always;
+        }
+        .no-break { page-break-inside: avoid; }
+        @media print {
+            body { background: transparent; padding: 0; }
+            .paper { box-shadow: none; border-radius: 0; padding: 0; margin: 0; }
+            .print-btn-bar { display: none !important; }
+        }
+        .print-btn-bar {
+            max-width: 860px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 8px;
+        }
+        .btn-print {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-print:hover { background: #1d4ed8; }
+        .header-top {
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .faculty-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .exam-badge {
+            background: #eff6ff;
+            color: var(--primary);
+            border: 1.5px solid var(--primary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 800;
+        }
+        h1.proj-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+        .subtitle {
+            font-size: 15px;
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+        .team-box {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 26px;
+            border-left: 4px solid var(--primary);
+        }
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .team-grid div { padding: 4px 0; }
+        h2.sec-heading {
+            font-size: 19px;
+            font-weight: 800;
+            color: #0f172a;
+            border-bottom: 1.5px solid var(--border);
+            padding-bottom: 6px;
+            margin: 24px 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tech-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .tech-pill {
+            background: #e2e8f0;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 13px;
+            color: #334155;
+        }
+        .tech-pill.html { background: #ffedd5; color: #c2410c; }
+        .tech-pill.css { background: #e0f2fe; color: #0369a1; }
+        .tech-pill.js { background: #fef9c3; color: #a16207; }
+        .tech-pill.php { background: #ede9fe; color: #6d28d9; }
+        .tech-pill.sql { background: #dcfce7; color: #15803d; }
+        .feature-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+        .feature-card h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .feature-card p {
+            font-size: 13.5px;
+            color: #475569;
+        }
+        table.schema-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin: 12px 0 20px;
+        }
+        table.schema-table th, table.schema-table td {
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            text-align: left;
+        }
+        table.schema-table th {
+            background: #f1f5f9;
+            font-weight: 700;
+        }
+        .highlight-box {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            margin: 16px 0;
+            font-weight: 600;
+        }
+        .cd-checklist {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-size: 13.5px;
+        }
+        .cd-checklist li { margin-left: 20px; margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+
+<div class="print-btn-bar">
+    <div>
+        <strong>Connectify Project Presentation</strong>
+        <span style="font-size:13px;opacity:0.8;margin-left:10px;">Ready for printing (A4 Page Size)</span>
+    </div>
+    <button class="btn-print" onclick="window.print()">
+        🖨️ Print Presentation Document
+    </button>
+</div>
+
+<!-- PAGE 1: COVER & EXECUTIVE SUMMARY -->
+<div class="paper">
+    <div class="header-top">
+        <div>
+            <div class="faculty-title">Practical Exam · Web Programming Course</div>
+            <h1 class="proj-title">Connectify - Social Media Web</h1>
+            <div class="subtitle">Complete Full-Stack Application with Integrated Persistent Web Calculator</div>
+        </div>
+        <div class="exam-badge">Exam Project #8</div>
+    </div>
+
+    <div class="team-box">
+        <strong style="font-size:15px;color:#0f172a;">👥 Project Team Information (Max 5 Students):</strong>
+        <div class="team-grid">
+            <div><strong>1. Student Name:</strong> ________________________</div>
+            <div><strong>Student ID / Sec:</strong> ________________________</div>
+            <div><strong>2. Student Name:</strong> ________________________</div>
+            <div><strong>Student ID / Sec:</strong> ________________________</div>
+            <div><strong>3. Student Name:</strong> ________________________</div>
+            <div><strong>Student ID / Sec:</strong> ________________________</div>
+            <div><strong>4. Student Name:</strong> ________________________</div>
+            <div><strong>Student ID / Sec:</strong> ________________________</div>
+            <div><strong>5. Student Name:</strong> ________________________</div>
+            <div><strong>Student ID / Sec:</strong> ________________________</div>
+        </div>
+    </div>
+
+    <h2 class="sec-heading">🎯 Project Overview & Exam Requirements Compliance</h2>
+    <p style="font-size:14px;margin-bottom:14px;">
+        Connectify is a modern, responsive, high-performance Social Media Web Application created in strict compliance with the practical exam guidelines for Web Programming.
+    </p>
+
+    <div class="tech-tags">
+        <span class="tech-pill html">HTML5 (Semantic Markup)</span>
+        <span class="tech-pill css">CSS3 (Variables, Dark/Light Modes, Flexbox, Grid)</span>
+        <span class="tech-pill js">JavaScript ES6+ (Real-time DOM, Async API, AI Chat)</span>
+        <span class="tech-pill php">Backend PHP (REST Endpoints, JSON Fallback)</span>
+        <span class="tech-pill sql">MySQL Database (Relational Schema)</span>
+    </div>
+
+    <div class="highlight-box">
+        ⭐ <strong>Mandatory Requirement Fulfilled:</strong> "مع تنفيذ اله حاسبه باستخدام الويب ثابته مع اي فكره من الافكار"
+        A fixed, interactive floating & standalone Web Calculator is fully implemented and accessible across all pages with standard and scientific calculation modes.
+    </div>
+
+    <h2 class="sec-heading">🌟 Core Deliverables Implemented</h2>
+    <div class="feature-card">
+        <h3>📝 1. Posts Feed Engine</h3>
+        <p>Dynamic feed with instant posting, image uploading, feeling/activity status badges, audience privacy settings, hashtag filtering, and post options (Save, Share, Copy Link, Delete).</p>
+    </div>
+    <div class="feature-card">
+        <h3>❤️ 2. Likes & Multi-Reactions System</h3>
+        <p>Multi-emoji emotional reactions (Like 👍, Love ❤️, Haha 😂, Wow 😮, Sad 😢, Angry 😡) with counter and real-time state synchronization.</p>
+    </div>
+    <div class="feature-card">
+        <h3>💬 3. Comments & Community Discussion</h3>
+        <p>Interactive nested commenting system enabling members to post comments with instant rendering, avatar tags, timestamps, and like triggers.</p>
+    </div>
+    <div class="feature-card">
+        <h3>👤 4. Profile Page & Personal Gallery</h3>
+        <p>Dedicated personal profile with editable cover photo, custom avatar changer, personal biography, employment & education attributes, friends grid, and dynamic photo gallery upload.</p>
+    </div>
+</div>
+
+<!-- PAGE 2: ADVANCED FEATURES & ARCHITECTURE -->
+<div class="paper">
+    <h2 class="sec-heading">🤖 5. Conversational AI Chat & Real-Time Messaging</h2>
+    <div class="feature-card">
+        <h3>💬 Floating Messenger Dock with Intelligent AI</h3>
+        <p>
+            Connectify features interactive conversational agents for community members. Users can chat in real time with automated AI personalities, complete with animated typing bubbles, message history persistence, and instant responses without requiring page reloads.
+        </p>
+    </div>
+
+    <h2 class="sec-heading">🧮 6. Fixed Persistent Web Calculator (Exam Requirement)</h2>
+    <div class="feature-card">
+        <h3>🧮 Features of the Built-in Web Calculator:</h3>
+        <ul style="margin-left:20px;font-size:13.5px;color:#475569;margin-top:6px;">
+            <li><strong>Persistent Floating Access:</strong> Always reachable from a fixed launcher on both <code>index.html</code> and <code>profile.html</code>, plus the navbar and sidebar.</li>
+            <li><strong>Standard Keypad:</strong> Addition, subtraction, multiplication, division, decimals, clear (C), clear entry (CE), backspace (⌫), and negation (±).</li>
+            <li><strong>Scientific Mode:</strong> Sine, cosine, tangent, square root (√x), square (x²), inverse (1/x), and constants (π).</li>
+            <li><strong>Calculation Tape / History:</strong> Saves previous equations to localStorage with click-to-reload capabilities.</li>
+            <li><strong>Social Integration:</strong> "Share to Feed" and "Send to Chat" buttons to post math results directly to friends or timeline!</li>
+            <li><strong>Keyboard Support:</strong> Direct typing on physical computer keyboards.</li>
+            <li><strong>Dedicated Standalone Page:</strong> Also available as <code>calculator.html</code> for full-screen demonstration.</li>
+        </ul>
+    </div>
+
+    <h2 class="sec-heading">🌗 7. White Mode & Dark Mode Theme Switcher</h2>
+    <p style="font-size:14px;color:#475569;margin-bottom:12px;">
+        Universal theme toggle supporting both clean White Mode and high-contrast Dark Mode with persistent theme memory stored in <code>localStorage</code>.
+    </p>
+
+    <h2 class="sec-heading">🗄️ 8. Database Architecture & Schema</h2>
+    <table class="schema-table">
+        <thead>
+            <tr><th>Table Name</th><th>Key Attributes</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>users</code></td><td>id, username, email, password, full_name, bio, avatar, work, education, location</td><td>Stores registered profiles & settings</td></tr>
+            <tr><td><code>posts</code></td><td>id, user_id, content, image_url, likes_count, created_at</td><td>Stores feed articles & media attachments</td></tr>
+            <tr><td><code>likes</code></td><td>id, post_id, user_id, reaction_type, created_at</td><td>Records likes and multi-reaction states</td></tr>
+            <tr><td><code>comments</code></td><td>id, post_id, user_id, comment_text, created_at</td><td>Stores member comments & replies</td></tr>
+            <tr><td><code>messages</code></td><td>id, sender_id, receiver_id, message, created_at</td><td>Records private chat histories</td></tr>
+        </tbody>
+    </table>
+
+    <div class="cd-checklist">
+        <strong>💿 CD Submission Checklist ("وضع المشروع كله علي CD وتسليمه اثناء المناقشه"):</strong>
+        <ul>
+            <li>✅ <code>index.html</code> (Main Feed, Stories, AI Messenger, Fixed Calculator)</li>
+            <li>✅ <code>profile.html</code> (User Profile, Gallery, Friends, Edit Profile, Calculator)</li>
+            <li>✅ <code>calculator.html</code> (Dedicated Standalone Web Calculator)</li>
+            <li>✅ <code>PROJECT_PRESENTATION.html</code> (Printable presentation document)</li>
+            <li>✅ <code>database.sql</code> (Complete MySQL relational database schema)</li>
+            <li>✅ <code>php/</code> (Backend REST APIs: <code>profile.php</code>, <code>posts.php</code>, <code>likes.php</code>, <code>comments.php</code>, <code>config.php</code>)</li>
+            <li>✅ <code>CD_SUBMISSION_GUIDE.md</code> (Complete project guide and discussion tips)</li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>

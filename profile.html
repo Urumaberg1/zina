@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connectify — Profile</title>
+<style>
+/* ========== DESIGN TOKENS & THEMING ========== */
+:root {
+    --bg: #f3f6f9;
+    --card: #ffffff;
+    --card-glass: rgba(255, 255, 255, 0.85);
+    --text: #0f1419;
+    --text-secondary: #536471;
+    --border: #e1e8ed;
+    --border-light: #eff3f4;
+    --hover-bg: #f0f3f6;
+    --input-bg: #eef2f6;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --accent: #8b5cf6;
+    --red: #ef4444;
+    --green: #10b981;
+    --orange: #f59e0b;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow: 0 4px 12px rgba(0,0,0,0.06);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 20px 48px rgba(0,0,0,0.14);
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 18px;
+    --radius-full: 9999px;
+    --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.dark-mode {
+    --bg: #0b0e14;
+    --card: #151921;
+    --card-glass: rgba(21, 25, 33, 0.85);
+    --text: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --border: #232936;
+    --border-light: #1c222d;
+    --hover-bg: #1e2430;
+    --input-bg: #1c222d;
+    --primary: #3b82f6;
+    --primary-hover: #60a5fa;
+    --primary-light: rgba(59, 130, 246, 0.15);
+    --accent: #a78bfa;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+    --shadow: 0 4px 12px rgba(0,0,0,0.35);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.45);
+    --shadow-lg: 0 20px 48px rgba(0,0,0,0.6);
+}
+
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    transition: background 0.3s ease, color 0.3s ease;
+    overflow-x: hidden; line-height: 1.45;
+}
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; font-family: inherit; border: none; outline: none; background: transparent; }
+input, textarea, select { font-family: inherit; outline: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* ========== TOP NAVBAR ========== */
+.navbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 60px;
+    background: var(--card-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-sm); z-index: 1000;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; border-bottom: 1px solid var(--border-light);
+}
+.nav-logo {
+    font-size: 24px; font-weight: 900; letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 50%, #ec4899 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; display: flex; align-items: center; gap: 8px; cursor: pointer;
+}
+.nav-search { flex: 0 1 360px; position: relative; }
+.nav-search input {
+    width: 100%; height: 38px; border-radius: 50px; border: 1px solid transparent;
+    background: var(--input-bg); padding: 0 16px 0 40px; font-size: 13.5px;
+    color: var(--text); transition: var(--transition);
+}
+.nav-search input:focus { background: var(--card); border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+.nav-search .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
+.nav-spacer { flex: 1; }
+.nav-icons { display: flex; align-items: center; gap: 8px; }
+.nav-icon-btn {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--hover-bg);
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition); position: relative; color: var(--text);
+}
+.nav-icon-btn:hover { background: var(--border); transform: translateY(-1px); }
+.nav-icon-btn.active { background: var(--primary-light); color: var(--primary); }
+.nav-icon-btn svg { width: 19px; height: 19px; fill: currentColor; }
+.user-pic {
+    width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
+    border: 2px solid transparent; cursor: pointer; transition: var(--transition);
+}
+.user-pic:hover { transform: scale(1.06); border-color: var(--primary); }
+
+/* ========== COVER PHOTO ========== */
+.cover-wrapper {
+    margin-top: 60px; position: relative; max-width: 1020px;
+    margin-left: auto; margin-right: auto; border-radius: 0 0 18px 18px; overflow: hidden;
+}
+.cover-photo {
+    width: 100%; height: 360px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 30%, #8b5cf6 70%, #ec4899 100%);
+    background-size: cover; background-position: center; position: relative;
+    transition: background 0.3s;
+}
+.cover-edit-btn {
+    position: absolute; bottom: 16px; right: 16px;
+    background: var(--card-glass); backdrop-filter: blur(8px);
+    color: var(--text); border: none; padding: 8px 18px; border-radius: var(--radius);
+    font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+    box-shadow: var(--shadow-md); transition: var(--transition);
+}
+.cover-edit-btn:hover { transform: translateY(-2px); }
+.cover-edit-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+/* ========== PROFILE HEADER ========== */
+.profile-header-wrap {
+    max-width: 1020px; margin: 0 auto; background: var(--card);
+    border-radius: 0 0 18px 18px; padding: 0 28px 24px; position: relative;
+    box-shadow: var(--shadow); border: 1px solid var(--border-light); border-top: none;
+    transition: background 0.3s ease;
+}
+.profile-header-top { display: flex; align-items: flex-end; gap: 24px; margin-top: -60px; flex-wrap: wrap; }
+.profile-avatar-wrap { position: relative; flex-shrink: 0; }
+.profile-avatar {
+    width: 168px; height: 168px; border-radius: 50%;
+    border: 5px solid var(--card); object-fit: cover;
+    box-shadow: var(--shadow-md); display: block;
+}
+.avatar-camera-btn {
+    position: absolute; bottom: 8px; right: 8px; width: 40px; height: 40px;
+    border-radius: 50%; background: var(--hover-bg); display: flex;
+    align-items: center; justify-content: center; cursor: pointer;
+    transition: var(--transition); border: 3px solid var(--card); color: var(--text);
+}
+.avatar-camera-btn:hover { background: var(--border); transform: scale(1.08); }
+.avatar-camera-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+.profile-info { flex: 1; padding-bottom: 8px; min-width: 240px; }
+.profile-name { font-size: 32px; font-weight: 800; line-height: 1.2; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.verified-icon { width: 22px; height: 22px; fill: var(--primary); }
+.profile-bio { font-size: 15px; color: var(--text-secondary); margin-top: 4px; line-height: 1.45; }
+.profile-stats { font-size: 14.5px; color: var(--text-secondary); margin-top: 8px; font-weight: 600; }
+.profile-stats span { color: var(--primary); font-weight: 700; cursor: pointer; }
+
+.profile-actions { display: flex; gap: 10px; padding-bottom: 8px; flex-wrap: wrap; }
+.btn-edit-profile {
+    background: var(--primary); color: #fff; padding: 10px 22px; border-radius: var(--radius);
+    font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+    transition: var(--transition); box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+}
+.btn-edit-profile:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.btn-more {
+    background: var(--hover-bg); color: var(--text); width: 42px; height: 42px;
+    border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; transition: var(--transition);
+}
+.btn-more:hover { background: var(--border); }
+
+/* ========== PROFILE TABS ========== */
+.profile-tabs-wrap {
+    max-width: 1020px; margin: 0 auto; background: var(--card);
+    border-radius: 0 0 16px 16px; position: sticky; top: 60px; z-index: 100;
+    box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); border-top: none;
+}
+.profile-tabs { display: flex; gap: 6px; padding: 0 20px; }
+.profile-tab {
+    padding: 16px 22px; font-size: 15px; font-weight: 700; color: var(--text-secondary);
+    cursor: pointer; border-bottom: 3px solid transparent; transition: var(--transition);
+    border-radius: 8px 8px 0 0; white-space: nowrap;
+}
+.profile-tab:hover { background: var(--hover-bg); color: var(--text); }
+.profile-tab.active { color: var(--primary); border-bottom-color: var(--primary); background: transparent; }
+
+/* ========== TWO COLUMN CONTENT ========== */
+.profile-content {
+    max-width: 1020px; margin: 18px auto 0; display: flex; gap: 18px;
+    padding: 0 0 50px; align-items: flex-start;
+}
+.left-col { width: 370px; flex-shrink: 0; position: sticky; top: 135px; display: flex; flex-direction: column; gap: 18px; }
+.right-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+
+/* ========== CARDS ========== */
+.card {
+    background: var(--card); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border-light);
+    transition: var(--transition);
+}
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 0; }
+.card-title { font-size: 18px; font-weight: 800; color: var(--text); }
+.card-link { font-size: 14px; color: var(--primary); cursor: pointer; font-weight: 700; }
+.card-link:hover { text-decoration: underline; }
+.card-body { padding: 18px 20px; }
+
+/* About Card */
+.about-bio { font-size: 14.5px; color: var(--text); text-align: center; margin-bottom: 16px; line-height: 1.5; }
+.about-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-size: 14.5px; color: var(--text); }
+.about-icon { font-size: 20px; }
+
+/* Photos Grid */
+.photos-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; padding: 0 20px 20px; }
+.photo-thumb {
+    aspect-ratio: 1; border-radius: var(--radius-sm); object-fit: cover;
+    width: 100%; cursor: pointer; transition: transform 0.2s, opacity 0.2s;
+}
+.photo-thumb:hover { opacity: 0.85; transform: scale(1.03); }
+
+/* Friends Grid */
+.friends-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 0 20px 20px; }
+.friend-item { text-align: center; cursor: pointer; }
+.friend-pic {
+    width: 100%; aspect-ratio: 1; border-radius: var(--radius); object-fit: cover;
+    margin-bottom: 6px; transition: transform 0.2s; border: 1px solid var(--border-light);
+}
+.friend-item:hover .friend-pic { transform: scale(1.05); }
+.friend-name { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.25; }
+
+/* ========== CREATE POST CARD ========== */
+.create-post-top { display: flex; gap: 12px; align-items: center; padding: 18px 20px 12px; }
+.create-post-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+.create-post-input {
+    flex: 1; height: 42px; border-radius: 50px; background: var(--input-bg);
+    border: none; padding: 0 20px; font-size: 15px; color: var(--text-secondary);
+    cursor: pointer; transition: var(--transition); text-align: left;
+}
+.create-post-input:hover { background: var(--hover-bg); }
+
+/* ========== POST CARD ========== */
+.post-card { background: var(--card); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border-light); }
+.post-header { display: flex; align-items: center; gap: 12px; padding: 18px 20px 10px; }
+.post-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; cursor: pointer; }
+.post-user-name { font-size: 15px; font-weight: 700; color: var(--text); }
+.post-time { font-size: 12.5px; color: var(--text-secondary); }
+.post-delete-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); }
+.post-delete-btn:hover { background: var(--hover-bg); color: var(--red); }
+.post-content { padding: 4px 20px 14px; font-size: 15px; line-height: 1.55; color: var(--text); white-space: pre-wrap; word-wrap: break-word; }
+.post-image { width: 100%; max-height: 520px; object-fit: cover; display: block; cursor: pointer; }
+.post-stats { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; font-size: 13.5px; color: var(--text-secondary); }
+.post-actions { display: flex; padding: 4px 20px; border-top: 1px solid var(--border-light); }
+.post-action-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 9px 0; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+    color: var(--text-secondary); transition: var(--transition);
+}
+.post-action-btn:hover { background: var(--hover-bg); color: var(--text); }
+.post-action-btn.liked { color: var(--primary); }
+.post-action-btn svg { width: 19px; height: 19px; fill: currentColor; }
+
+/* Tab Panels */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Modal */
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+    z-index: 2000; display: none; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px); padding: 16px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: var(--card); border-radius: var(--radius-lg); width: 100%;
+    max-width: 520px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+}
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-light); }
+.modal-title { font-size: 19px; font-weight: 800; }
+.modal-close { width: 36px; height: 36px; border-radius: 50%; background: var(--hover-bg); font-size: 18px; display: flex; align-items: center; justify-content: center; }
+.modal-body { padding: 20px; }
+.modal-field { margin-bottom: 14px; }
+.modal-field label { display: block; font-size: 13.5px; font-weight: 700; margin-bottom: 6px; }
+.modal-field input, .modal-field textarea {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 14px; color: var(--text);
+    background: var(--card); transition: border-color 0.2s;
+}
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px 18px; border-top: 1px solid var(--border-light); }
+.btn-save { padding: 10px 24px; border-radius: var(--radius); background: var(--primary); color: white; font-weight: 700; }
+
+/* Chat Dock */
+.chat-dock { position: fixed; bottom: 0; right: 40px; z-index: 1500; display: flex; gap: 14px; align-items: flex-end; }
+.chat-window {
+    width: 330px; height: 420px; background: var(--card);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+}
+.chat-header {
+    padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--border-light);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.chat-user { display: flex; align-items: center; gap: 10px; }
+.chat-user-pic { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+.chat-messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
+.msg { max-width: 78%; padding: 9px 13px; border-radius: 18px; font-size: 13.5px; line-height: 1.4; word-wrap: break-word; }
+.msg-them { align-self: flex-start; background: var(--card); color: var(--text); border-bottom-left-radius: 4px; box-shadow: var(--shadow-sm); }
+.msg-me { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+.typing-bubble {
+    align-self: flex-start; background: var(--card); padding: 8px 12px;
+    border-radius: 16px; border-bottom-left-radius: 4px; display: none; align-items: center; gap: 4px;
+}
+.typing-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-secondary); animation: bounceDot 1.4s infinite ease-in-out both; }
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+@keyframes bounceDot { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+.chat-input-bar { padding: 8px 12px; background: var(--card); border-top: 1px solid var(--border-light); display: flex; gap: 8px; }
+.chat-input-bar input { flex: 1; padding: 8px 14px; background: var(--input-bg); border: none; border-radius: 50px; font-size: 13.5px; color: var(--text); }
+
+/* Toast */
+.toast-msg {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: #181920; color: white; padding: 12px 24px; border-radius: 50px;
+    font-size: 14px; font-weight: 600; box-shadow: var(--shadow-lg); z-index: 4000;
+    opacity: 0; transition: all 0.35s ease; border: 1px solid rgba(255,255,255,0.1);
+}
+.toast-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+@media(max-width:980px){
+    .cover-wrapper, .profile-header-wrap, .profile-tabs-wrap, .profile-content { max-width: 100%; border-radius: 0; }
+    .profile-content { padding: 0 12px 50px; }
+}
+@media(max-width:768px){
+    .left-col { display: none; }
+    .profile-header-top { flex-direction: column; align-items: center; text-align: center; margin-top: -60px; }
+    .profile-info { text-align: center; }
+    .profile-actions { justify-content: center; }
+    .nav-search { display: none; }
+}
+/* ========== FIXED WEB CALCULATOR (اله حاسبه ثابته) ========== */
+.fixed-calc-wrapper {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 9999;
+    font-family: inherit;
+}
+.calc-launcher-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 20px;
+    background: linear-gradient(135deg, #2563eb, #8b5cf6);
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.calc-launcher-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.55);
+}
+.calc-launcher-icon { font-size: 19px; }
+.calculator-window {
+    position: absolute;
+    bottom: 56px;
+    left: 0;
+    width: 330px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    animation: calcSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    color: var(--text);
+    z-index: 10001;
+}
+@keyframes calcSlideIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.calc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--hover-bg);
+    border-bottom: 1px solid var(--border);
+}
+.calc-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+}
+.calc-badge {
+    font-size: 10px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #10b981, #06b6d4);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+.calc-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.calc-ctrl-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+.calc-ctrl-btn:hover {
+    background: var(--border-light);
+    color: var(--text);
+}
+.calc-body {
+    padding: 14px;
+    position: relative;
+}
+.calc-display {
+    background: var(--hover-bg);
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: right;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+}
+.calc-expr {
+    font-size: 12px;
+    color: var(--text-secondary);
+    min-height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.calc-val {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-top: 4px;
+}
+.calc-val::-webkit-scrollbar { display: none; }
+.calc-sci-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border);
+}
+.calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.calc-btn {
+    height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.calc-btn:hover {
+    background: var(--hover-bg);
+    transform: translateY(-1px);
+}
+.calc-btn:active { transform: scale(0.96); }
+.calc-btn.op {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+    border-color: rgba(37, 99, 235, 0.2);
+    font-weight: 700;
+}
+.calc-btn.op:hover {
+    background: var(--primary);
+    color: #fff;
+}
+.calc-btn.func {
+    background: var(--hover-bg);
+    color: var(--text-secondary);
+    font-size: 13.5px;
+}
+.calc-btn.sci {
+    height: 32px;
+    font-size: 11px;
+    background: var(--hover-bg);
+    color: var(--text-secondary);
+    border-radius: 6px;
+}
+.calc-btn.sci:hover {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+}
+.calc-btn.equals {
+    background: linear-gradient(135deg, #2563eb, #8b5cf6);
+    color: #fff;
+    border: none;
+    font-weight: 700;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+.calc-btn.equals:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+}
+.calc-footer-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-light);
+}
+.calc-action-btn {
+    flex: 1;
+    padding: 6px 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: var(--hover-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s;
+    text-align: center;
+}
+.calc-action-btn:hover {
+    background: rgba(37, 99, 235, 0.15);
+    color: var(--primary);
+    border-color: var(--primary);
+}
+.calc-history-drawer {
+    position: absolute;
+    inset: 14px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
+    animation: calcSlideIn 0.2s ease;
+}
+.calc-hist-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+.calc-hist-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.calc-hist-item {
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: var(--hover-bg);
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.15s;
+}
+.calc-hist-item:hover { background: var(--border-light); }
+.calc-hist-expr { color: var(--text-secondary); }
+.calc-hist-res { font-weight: 700; color: var(--primary); text-align: right; }
+
+/* Profile Comments Section */
+.profile-comments-box {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-light);
+}
+.p-comment-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.p-comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.p-comment-bubble {
+    background: var(--hover-bg);
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 13px;
+}
+.p-comment-user {
+    font-weight: 700;
+    display: block;
+    margin-bottom: 2px;
+}
+.p-comment-input-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+.p-comment-input {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 13px;
+    background: var(--hover-bg);
+    color: var(--text);
+    outline: none;
+}
+.p-comment-send {
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<!-- ========== TOP NAVBAR ========== -->
+<nav class="navbar">
+    <a href="index.html" class="nav-logo">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="url(#p-logo-grad)"><defs><linearGradient id="p-logo-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2563eb"/><stop offset="50%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><circle cx="12" cy="12" r="10"/><path d="M12 6a6 6 0 00-6 6c0 2.97 2.16 5.43 5 5.91V13.5H9.5V11.5H11v-1.5c0-1.5 1-2.5 2.5-2.5h1.5v2h-1c-.5 0-.8.4-.8.8v1.2h2l-.5 2h-1.5v4.41c2.84-.48 5-2.94 5-5.91a6 6 0 00-6-6z" fill="#fff"/></svg>
+        Connectify
+    </a>
+    <div class="nav-search">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="var(--text-secondary)"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2.5" fill="none"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        <input type="text" placeholder="Search profile content..." oninput="toast('Searching profile...')">
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-icons">
+        <a href="index.html" class="nav-icon-btn" title="Home Feed">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        </a>
+        <button class="nav-icon-btn" onclick="toggleCalculator()" title="Web Calculator (الآلة الحاسبة الثابتة)">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 16H6v-2h6v2zm0-4H6v-2h6v2zm0-4H6V9h6v2zm6 8h-4v-6h4v6zm0-8h-4V9h4v2z"/></svg>
+        </button>
+        <button class="nav-icon-btn" id="profileThemeToggleBtn" onclick="toggleDarkMode()" title="Toggle White/Dark Mode">
+            <svg id="profileThemeIcon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+        </button>
+        <a href="index.html" class="nav-icon-btn" title="Notifications">
+            <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+        </a>
+        <img class="user-pic" id="navAvatarPic" src="" alt="Profile" onclick="location.href='profile.html'" title="My Profile (Click to reload)" style="cursor:pointer;border:2px solid var(--primary);">
+    </div>
+</nav>
+
+<!-- ========== COVER PHOTO ========== -->
+<div class="cover-wrapper">
+    <div class="cover-photo" id="coverPhoto">
+        <button class="cover-edit-btn" onclick="openCoverModal()">
+            <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+            Edit Cover Photo
+        </button>
+        <input type="file" id="coverFileInput" style="display:none" accept="image/*">
+    </div>
+</div>
+
+<!-- ========== PROFILE HEADER ========== -->
+<div class="profile-header-wrap">
+    <div class="profile-header-top">
+        <div class="profile-avatar-wrap">
+            <img class="profile-avatar" id="profileAvatar" src="" alt="Avatar">
+            <div class="avatar-camera-btn" onclick="document.getElementById('avatarFileInput').click()" title="Change Profile Photo">
+                <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+            </div>
+            <input type="file" id="avatarFileInput" style="display:none" accept="image/*">
+        </div>
+        <div class="profile-info">
+            <div class="profile-name">
+                <span id="profileName">User Name</span>
+                <svg class="verified-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            </div>
+            <div class="profile-bio" id="profileBio">Welcome to my Connectify profile!</div>
+            <div class="profile-stats">
+                <span id="postCount">0</span> Posts · 
+                <span onclick="switchTab('friends')"><strong id="friendsCount">8</strong> Friends</span> · 
+                <span onclick="switchTab('photos')">312 Photos</span>
+            </div>
+        </div>
+        <div class="profile-actions">
+            <button class="btn-edit-profile" onclick="openEditModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 000-1.42l-2.34-2.33a1.003 1.003 0 00-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.83z"/></svg>
+                Edit Profile
+            </button>
+            <button class="btn-edit-profile" style="background:var(--hover-bg);color:var(--text);box-shadow:none;" onclick="toggleCalculator()" title="Open Web Calculator">
+                🧮 Calculator
+            </button>
+            <button class="btn-more" onclick="toast('Profile link copied to clipboard! 📋')" title="Copy link">⋯</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== PROFILE TABS ========== -->
+<div class="profile-tabs-wrap">
+    <div class="profile-tabs">
+        <div class="profile-tab active" data-tab="posts" onclick="switchTab('posts')">Posts</div>
+        <div class="profile-tab" data-tab="about" onclick="switchTab('about')">About</div>
+        <div class="profile-tab" data-tab="friends" onclick="switchTab('friends')">Friends</div>
+        <div class="profile-tab" data-tab="photos" onclick="switchTab('photos')">Photos</div>
+    </div>
+</div>
+
+<!-- ========== TAB: POSTS ========== -->
+<div class="profile-content tab-panel active" id="panel-posts">
+    <div class="left-col">
+        <!-- About Overview -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Intro</h2>
+                <span class="card-link" onclick="openEditModal()">Edit</span>
+            </div>
+            <div class="card-body">
+                <div class="about-bio" id="aboutBio">Full-Stack Web Developer & Designer 🚀</div>
+                <div class="about-item"><span class="about-icon">💼</span><span>Works at <strong id="aboutWork">Tech Solutions Inc.</strong></span></div>
+                <div class="about-item"><span class="about-icon">🎓</span><span>Studied at <strong id="aboutEdu">Cairo University</strong></span></div>
+                <div class="about-item"><span class="about-icon">📍</span><span>Lives in <strong id="aboutLocation">Cairo, Egypt</strong></span></div>
+                <div class="about-item"><span class="about-icon">❤️</span><span id="aboutRelationship">Single</span></div>
+                <button class="btn-edit-profile" style="width:100%;justify-content:center;margin-top:14px;background:var(--hover-bg);color:var(--text);box-shadow:none;" onclick="openEditModal()">Edit Details</button>
+            </div>
+        </div>
+
+        <!-- Photos -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Photos</h2>
+                <span class="card-link" onclick="switchTab('photos')">See All</span>
+            </div>
+            <div style="height:10px"></div>
+            <div class="photos-grid" id="sidePhotosGrid"></div>
+        </div>
+
+        <!-- Friends Grid -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Friends</h2>
+                <span class="card-link" onclick="switchTab('friends')">See All</span>
+            </div>
+            <div style="padding:4px 20px 0;font-size:13.5px;color:var(--text-secondary)"><span id="sideFriendsCount">8</span> friends</div>
+            <div style="height:10px"></div>
+            <div class="friends-grid" id="sideFriendsGrid"></div>
+        </div>
+    </div>
+
+    <!-- Right Column Posts -->
+    <div class="right-col">
+        <div class="card">
+            <div class="create-post-top">
+                <img class="create-post-avatar" id="createPostAvatar" src="" alt="Me">
+                <button class="create-post-input" onclick="openCreateModal()">What's on your mind?</button>
+            </div>
+        </div>
+
+        <div id="postsFeed"></div>
+    </div>
+</div>
+
+<!-- ========== TAB: ABOUT ========== -->
+<div class="profile-content tab-panel" id="panel-about">
+    <div class="card" style="width:100%;">
+        <div class="card-header"><h2 class="card-title">About Overview</h2><button class="btn-edit-profile" onclick="openEditModal()">Edit Information</button></div>
+        <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
+            <div class="card card-pad">
+                <h4 style="margin-bottom:8px;">💼 Work & Careers</h4>
+                <div class="about-item"><span>🏢 Works as Full-Stack Engineer at <strong id="aboutFullWork">Tech Solutions Inc.</strong></span></div>
+            </div>
+            <div class="card card-pad">
+                <h4 style="margin-bottom:8px;">🎓 Education</h4>
+                <div class="about-item"><span>🎓 Studied Computer Science at <strong id="aboutFullEdu">Cairo University</strong></span></div>
+            </div>
+            <div class="card card-pad">
+                <h4 style="margin-bottom:8px;">📍 Places Lived</h4>
+                <div class="about-item"><span>🏠 Lives in <strong id="aboutFullLoc">Cairo, Egypt</strong></span></div>
+            </div>
+            <div class="card card-pad">
+                <h4 style="margin-bottom:8px;">❤️ Basic Info</h4>
+                <div class="about-item"><span id="aboutFullRel">Relationship: Single</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== TAB: FRIENDS ========== -->
+<div class="profile-content tab-panel" id="panel-friends">
+    <div class="card" style="width:100%;">
+        <div class="card-header"><h2 class="card-title">All Friends (<span id="friendsTabCount">8</span>)</h2></div>
+        <div class="card-body" id="friendsTabGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;"></div>
+    </div>
+</div>
+
+<!-- ========== TAB: PHOTOS ========== -->
+<div class="profile-content tab-panel" id="panel-photos">
+    <div class="card" style="width:100%;">
+        <div class="card-header">
+            <h2 class="card-title">Photo Gallery</h2>
+            <button class="btn-edit-profile" onclick="document.getElementById('galleryUpload').click()">+ Upload Photo</button>
+            <input type="file" id="galleryUpload" accept="image/*" style="display:none" onchange="uploadToGallery(event)">
+        </div>
+        <div class="card-body" id="photosTabGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;"></div>
+    </div>
+</div>
+
+<!-- ========== EDIT PROFILE MODAL ========== -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit Profile Information</h2>
+            <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-field">
+                <label>Display Name</label>
+                <input type="text" id="editName">
+            </div>
+            <div class="modal-field">
+                <label>Bio</label>
+                <textarea id="editBio" rows="2"></textarea>
+            </div>
+            <div class="modal-field">
+                <label>Workplace</label>
+                <input type="text" id="editWork">
+            </div>
+            <div class="modal-field">
+                <label>Education</label>
+                <input type="text" id="editEdu">
+            </div>
+            <div class="modal-field">
+                <label>Location</label>
+                <input type="text" id="editLocation">
+            </div>
+            <div class="modal-field">
+                <label>Relationship Status</label>
+                <select id="editRelationship" style="width:100%;padding:10px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--text);">
+                    <option>Single</option>
+                    <option>In a relationship</option>
+                    <option>Engaged</option>
+                    <option>Married</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-close" style="width:auto;padding:8px 18px;border-radius:8px;" onclick="closeModal('editModal')">Cancel</button>
+            <button class="btn-save" onclick="saveProfileChanges()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== CREATE POST MODAL ========== -->
+<div class="modal-overlay" id="createPostModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Create Post</h2>
+            <button class="modal-close" onclick="closeModal('createPostModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <textarea id="postContentInput" placeholder="What's on your mind?" style="width:100%;height:120px;border:none;resize:none;font-size:16px;background:transparent;"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-save" onclick="submitProfilePost()">Post</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== LIGHTBOX MODAL ========== -->
+<div class="modal-overlay" id="lightboxModal" onclick="closeModal('lightboxModal')">
+    <img id="lightboxImg" src="" style="max-width:90%;max-height:85vh;border-radius:10px;" alt="Photo">
+</div>
+
+<!-- ========== FIXED PERSISTENT WEB CALCULATOR (اله حاسبه ثابته) ========== -->
+<div id="fixedCalcWrapper" class="fixed-calc-wrapper">
+    <!-- Floating Launcher Pill -->
+    <button id="calcLauncherBtn" class="calc-launcher-btn" onclick="toggleCalculator()" title="Open Web Calculator (الآلة الحاسبة)">
+        <span class="calc-launcher-icon">🧮</span>
+        <span class="calc-launcher-label">Web Calculator</span>
+    </button>
+
+    <!-- Floating / Docked Calculator Window -->
+    <div id="calculatorWindow" class="calculator-window" style="display:none;">
+        <div class="calc-header">
+            <div class="calc-title">
+                <span>🧮</span>
+                <strong>Web Calculator</strong>
+                <span class="calc-badge">Exam Project</span>
+            </div>
+            <div class="calc-controls">
+                <button class="calc-ctrl-btn" onclick="toggleCalcHistory()" title="Calculation History">📜</button>
+                <button class="calc-ctrl-btn" onclick="toggleCalcScientific()" id="btnCalcSciToggle" title="Scientific Mode">f(x)</button>
+                <button class="calc-ctrl-btn" onclick="minimizeCalculator()" title="Minimize">─</button>
+                <button class="calc-ctrl-btn" onclick="toggleCalculator()" title="Close">✕</button>
+            </div>
+        </div>
+
+        <div class="calc-body">
+            <!-- Display Screen -->
+            <div class="calc-display">
+                <div class="calc-expr" id="calcExpr"></div>
+                <div class="calc-val" id="calcVal">0</div>
+            </div>
+
+            <!-- Scientific Row (collapsible/toggleable) -->
+            <div class="calc-sci-row" id="calcSciRow" style="display:none;">
+                <button class="calc-btn sci" onclick="calcSci('sin')">sin</button>
+                <button class="calc-btn sci" onclick="calcSci('cos')">cos</button>
+                <button class="calc-btn sci" onclick="calcSci('tan')">tan</button>
+                <button class="calc-btn sci" onclick="calcSci('sqrt')">√x</button>
+                <button class="calc-btn sci" onclick="calcSci('sqr')">x²</button>
+                <button class="calc-btn sci" onclick="calcSci('inv')">1/x</button>
+                <button class="calc-btn sci" onclick="calcSci('pi')">π</button>
+                <button class="calc-btn sci" onclick="calcInput('(')">(</button>
+                <button class="calc-btn sci" onclick="calcInput(')')">)</button>
+                <button class="calc-btn sci" onclick="calcInput('%')">%</button>
+            </div>
+
+            <!-- Main Keypad Grid -->
+            <div class="calc-grid">
+                <button class="calc-btn func" onclick="calcClearAll()">C</button>
+                <button class="calc-btn func" onclick="calcClearEntry()">CE</button>
+                <button class="calc-btn func" onclick="calcBackspace()">⌫</button>
+                <button class="calc-btn op" onclick="calcOperator('/')">÷</button>
+
+                <button class="calc-btn num" onclick="calcInput('7')">7</button>
+                <button class="calc-btn num" onclick="calcInput('8')">8</button>
+                <button class="calc-btn num" onclick="calcInput('9')">9</button>
+                <button class="calc-btn op" onclick="calcOperator('*')">×</button>
+
+                <button class="calc-btn num" onclick="calcInput('4')">4</button>
+                <button class="calc-btn num" onclick="calcInput('5')">5</button>
+                <button class="calc-btn num" onclick="calcInput('6')">6</button>
+                <button class="calc-btn op" onclick="calcOperator('-')">−</button>
+
+                <button class="calc-btn num" onclick="calcInput('1')">1</button>
+                <button class="calc-btn num" onclick="calcInput('2')">2</button>
+                <button class="calc-btn num" onclick="calcInput('3')">3</button>
+                <button class="calc-btn op" onclick="calcOperator('+')">+</button>
+
+                <button class="calc-btn func" onclick="calcNegate()">±</button>
+                <button class="calc-btn num" onclick="calcInput('0')">0</button>
+                <button class="calc-btn num" onclick="calcInput('.')">.</button>
+                <button class="calc-btn equals" onclick="calcCalculate()">=</button>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="calc-footer-actions">
+                <button class="calc-action-btn" onclick="copyCalcResult()" title="Copy result to clipboard">📋 Copy</button>
+                <button class="calc-action-btn" onclick="shareCalcToFeed()" title="Share to Profile post">📝 Share</button>
+                <button class="calc-action-btn" onclick="sendCalcToChat()" title="Send to active chat">💬 To Chat</button>
+            </div>
+
+            <!-- History Panel (slides up) -->
+            <div class="calc-history-drawer" id="calcHistoryDrawer" style="display:none;">
+                <div class="calc-hist-head">
+                    <strong style="font-size:12.5px;">Recent Calculations</strong>
+                    <button class="btn-text" onclick="clearCalcHistory()">Clear</button>
+                </div>
+                <div class="calc-hist-list" id="calcHistoryList">
+                    <div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:12px;">No calculations yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== FLOATING AI CHAT DOCK ========== -->
+<div class="chat-dock" id="chatDock"></div>
+
+<!-- ========== TOAST NOTIFICATION ========== -->
+<div class="toast-msg" id="toast"><span id="toastText">Action completed</span></div>
+
+<!-- ==========================================
+     CORE JAVASCRIPT: SYNCED DATA & AI MESSAGING
+     ========================================== -->
+<script>
+const POSTS_KEY = 'socialvibe_posts';
+const PROFILE_KEY = 'socialvibe_profile';
+const USERS_KEY = 'socialvibe_users';
+const COVER_KEY = 'socialvibe_cover';
+const THEME_KEY = 'connectify_theme';
+const CHATS_PREFIX = 'connectify_chat_';
+
+const DEFAULT_ME = {
+    name: "User Name",
+    bio: "Full-Stack Web Developer & Designer 🚀",
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    work: "Tech Solutions Inc.",
+    education: "Cairo University",
+    location: "Cairo, Egypt",
+    relationship: "Single"
+};
+
+const SAMPLE_GALLERY = [
+    "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=500&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1581291518655-9523c93269c3?w=500&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500&auto=format&fit=crop&q=80"
+];
+
+function initTheme() {
+    const cur = localStorage.getItem(THEME_KEY) || 'light';
+    applyTheme(cur);
+}
+
+function applyTheme(theme) {
+    const isDark = theme === 'dark';
+    document.body.classList.toggle('dark-mode', isDark);
+    localStorage.setItem(THEME_KEY, theme);
+    const icon = document.getElementById('profileThemeIcon');
+    if (icon) {
+        if (isDark) {
+            icon.innerHTML = '<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 000-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>';
+        } else {
+            icon.innerHTML = '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>';
+        }
+    }
+}
+
+function toggleDarkMode() {
+    const isDark = document.body.classList.contains('dark-mode');
+    applyTheme(isDark ? 'light' : 'dark');
+    toast(`Switched to ${isDark ? 'White' : 'Dark'} Mode 🌓`);
+}
+
+function getProfile() {
+    try {
+        const s = localStorage.getItem(PROFILE_KEY);
+        if (s) return JSON.parse(s);
+    } catch(e) {}
+    return DEFAULT_ME;
+}
+function saveProfile(p) { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }
+
+function getAllMembers() {
+    try {
+        const s = localStorage.getItem(USERS_KEY);
+        if (s) return JSON.parse(s);
+    } catch(e) {}
+    return [];
+}
+
+function getPosts() {
+    try {
+        const s = localStorage.getItem(POSTS_KEY);
+        if (s) return JSON.parse(s);
+    } catch(e) {}
+    return [];
+}
+function savePosts(p) { localStorage.setItem(POSTS_KEY, JSON.stringify(p)); }
+
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    updateUI();
+    renderSideGrids();
+    renderUserPosts();
+    renderGallery();
+    initCalc();
+});
+
+function updateUI() {
+    const me = getProfile();
+    const members = getAllMembers();
+    const posts = getPosts().filter(p => p.author === me.name || p.isOwn);
+
+    document.getElementById('navAvatarPic').src = me.avatar;
+    document.getElementById('profileAvatar').src = me.avatar;
+    document.getElementById('createPostAvatar').src = me.avatar;
+
+    document.getElementById('profileName').textContent = me.name;
+    document.getElementById('profileBio').textContent = me.bio;
+    document.getElementById('aboutBio').textContent = me.bio;
+    document.getElementById('aboutWork').textContent = me.work;
+    document.getElementById('aboutEdu').textContent = me.education;
+    document.getElementById('aboutLocation').textContent = me.location;
+    document.getElementById('aboutRelationship').textContent = me.relationship || 'Single';
+
+    document.getElementById('aboutFullWork').textContent = me.work;
+    document.getElementById('aboutFullEdu').textContent = me.education;
+    document.getElementById('aboutFullLoc').textContent = me.location;
+    document.getElementById('aboutFullRel').textContent = "Relationship: " + (me.relationship || 'Single');
+
+    document.getElementById('postCount').textContent = posts.length;
+    document.getElementById('friendsCount').textContent = members.length;
+    document.getElementById('sideFriendsCount').textContent = members.length;
+    document.getElementById('friendsTabCount').textContent = members.length;
+
+    const cover = localStorage.getItem(COVER_KEY);
+    if (cover) {
+        if (cover.startsWith('data:') || cover.startsWith('http')) {
+            document.getElementById('coverPhoto').style.backgroundImage = `url('${cover}')`;
+        } else {
+            document.getElementById('coverPhoto').style.background = cover;
+        }
+    }
+}
+
+function renderSideGrids() {
+    const members = getAllMembers();
+    const sideFriends = document.getElementById('sideFriendsGrid');
+    if (sideFriends) {
+        sideFriends.innerHTML = members.slice(0, 6).map(m => `
+            <div class="friend-item" onclick="openChat('${m.id}')">
+                <img class="friend-pic" src="${m.avatar}" alt="${escapeHtml(m.name)}">
+                <div class="friend-name">${escapeHtml(m.name)}</div>
+            </div>
+        `).join('');
+    }
+
+    const sidePhotos = document.getElementById('sidePhotosGrid');
+    if (sidePhotos) {
+        sidePhotos.innerHTML = SAMPLE_GALLERY.slice(0, 6).map(p => `
+            <img class="photo-thumb" src="${p}" onclick="openLightbox('${p}')" alt="Photo">
+        `).join('');
+    }
+
+    const friendsTabGrid = document.getElementById('friendsTabGrid');
+    if (friendsTabGrid) {
+        friendsTabGrid.innerHTML = members.map(m => `
+            <div class="card card-pad" style="text-align:center;">
+                <img src="${m.avatar}" style="width:76px;height:76px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;">
+                <strong style="font-size:15px;display:block;">${escapeHtml(m.name)}</strong>
+                <span style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:12px;">${escapeHtml(m.role || 'Member')}</span>
+                <button class="btn-edit-profile" style="width:100%;justify-content:center;padding:7px;font-size:13px;" onclick="openChat('${m.id}')">Chat</button>
+            </div>
+        `).join('');
+    }
+}
+
+function renderGallery() {
+    const grid = document.getElementById('photosTabGrid');
+    if (!grid) return;
+    grid.innerHTML = SAMPLE_GALLERY.map(p => `
+        <img src="${p}" style="width:100%;height:180px;border-radius:12px;object-fit:cover;cursor:pointer;" onclick="openLightbox('${p}')">
+    `).join('');
+}
+
+function uploadToGallery(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = (ev) => {
+        SAMPLE_GALLERY.unshift(ev.target.result);
+        renderGallery();
+        renderSideGrids();
+        toast('Photo added to gallery! 📸');
+    };
+    r.readAsDataURL(file);
+}
+
+function renderUserPosts() {
+    const me = getProfile();
+    const myPosts = getPosts().filter(p => p.author === me.name || p.isOwn);
+    const feed = document.getElementById('postsFeed');
+    if (!feed) return;
+
+    if (myPosts.length === 0) {
+        feed.innerHTML = `
+            <div class="card card-pad" style="text-align:center;padding:40px 20px;">
+                <h3>No posts yet</h3>
+                <p style="color:var(--text-secondary);font-size:14px;margin-top:4px;">Share your thoughts with the community!</p>
+            </div>
+        `;
+        return;
+    }
+
+    feed.innerHTML = myPosts.map(p => {
+        const comments = p.comments || [];
+        const commentsHTML = comments.map(c => `
+            <div class="p-comment-row">
+                <img class="p-comment-avatar" src="${c.avatar || me.avatar}" alt="${escapeHtml(c.author)}">
+                <div class="p-comment-bubble">
+                    <span class="p-comment-user">${escapeHtml(c.author)}</span>
+                    <div>${escapeHtml(c.text)}</div>
+                </div>
+            </div>
+        `).join('');
+
+        return `
+        <div class="card post-card" id="post-${p.id}">
+            <div class="post-header">
+                <img class="post-avatar" src="${p.avatar || me.avatar}" alt="${escapeHtml(p.author)}">
+                <div style="flex:1;">
+                    <div class="post-user-name">${escapeHtml(p.author)}</div>
+                    <div class="post-time">${p.time || 'Recently'}</div>
+                </div>
+                <button class="post-delete-btn" onclick="deleteProfilePost(${p.id})" title="Delete post">✕</button>
+            </div>
+            ${p.text ? `<div class="post-content">${escapeHtml(p.text)}</div>` : ''}
+            ${p.image ? `<img class="post-image" src="${p.image}" onclick="openLightbox('${p.image}')" alt="Post media">` : ''}
+            <div class="post-stats">
+                <div>👍 ${p.likes || 0} likes</div>
+                <div>${comments.length} comments · ${p.shares || 0} shares</div>
+            </div>
+            <div class="post-actions">
+                <button class="post-action-btn ${p.liked?'liked':''}" onclick="toggleLike(${p.id})">
+                    <svg viewBox="0 0 24 24"><path d="M14 9V3.5a2.5 2.5 0 00-5 0V9H4a2 2 0 00-2 2v.5l2 8A2 2 0 006 21h9a2 2 0 002-2V11a2 2 0 00-2-2h-1z"/></svg>
+                    Like
+                </button>
+                <button class="post-action-btn" onclick="toggleProfileComments(${p.id})">
+                    <svg viewBox="0 0 24 24"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>
+                    Comment
+                </button>
+                <button class="post-action-btn" onclick="shareProfilePost(${p.id})">
+                    <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                    Share
+                </button>
+            </div>
+            <div class="profile-comments-box" id="profileComments-${p.id}" style="display:${p.showComments ? 'block' : 'none'};">
+                <div id="pCommentsList-${p.id}">${commentsHTML || '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">No comments yet. Be the first to comment!</div>'}</div>
+                <div class="p-comment-input-row">
+                    <input type="text" class="p-comment-input" id="profileCommentInp-${p.id}" placeholder="Write a comment..." onkeydown="if(event.key==='Enter') submitProfileComment(${p.id})">
+                    <button class="p-comment-send" onclick="submitProfileComment(${p.id})">Post</button>
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+function toggleProfileComments(id) {
+    const el = document.getElementById(`profileComments-${id}`);
+    if (!el) return;
+    const isHidden = el.style.display === 'none' || el.style.display === '';
+    el.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) {
+        setTimeout(() => {
+            const inp = document.getElementById(`profileCommentInp-${id}`);
+            if (inp) inp.focus();
+        }, 100);
+    }
+}
+
+function submitProfileComment(id) {
+    const inp = document.getElementById(`profileCommentInp-${id}`);
+    if (!inp || !inp.value.trim()) return;
+    const text = inp.value.trim();
+    const me = getProfile();
+    const posts = getPosts();
+    const p = posts.find(x => x.id === id);
+    if (p) {
+        if (!p.comments) p.comments = [];
+        p.comments.push({
+            id: Date.now(),
+            author: me.name,
+            avatar: me.avatar,
+            text: text,
+            time: 'Just now'
+        });
+        p.showComments = true;
+        savePosts(posts);
+        renderUserPosts();
+        toast('Comment added to post! 💬');
+    }
+}
+
+function shareProfilePost(id) {
+    const posts = getPosts();
+    const p = posts.find(x => x.id === id);
+    if (p) {
+        p.shares = (p.shares || 0) + 1;
+        savePosts(posts);
+        renderUserPosts();
+        toast('Post shared! 🚀');
+    }
+}
+
+function toggleLike(id) {
+    const posts = getPosts();
+    const p = posts.find(x => x.id === id);
+    if (p) {
+        p.liked = !p.liked;
+        p.likes = (p.likes || 0) + (p.liked ? 1 : -1);
+        savePosts(posts);
+        renderUserPosts();
+    }
+}
+
+function deleteProfilePost(id) {
+    if (!confirm('Delete this post?')) return;
+    const posts = getPosts().filter(x => x.id !== id);
+    savePosts(posts);
+    renderUserPosts();
+    updateUI();
+    toast('Post deleted 🗑️');
+}
+
+// Modals
+function openEditModal() {
+    const me = getProfile();
+    document.getElementById('editName').value = me.name;
+    document.getElementById('editBio').value = me.bio;
+    document.getElementById('editWork').value = me.work;
+    document.getElementById('editEdu').value = me.education;
+    document.getElementById('editLocation').value = me.location;
+    document.getElementById('editRelationship').value = me.relationship || 'Single';
+    openModal('editModal');
+}
+
+function saveProfileChanges() {
+    const me = getProfile();
+    me.name = document.getElementById('editName').value.trim() || me.name;
+    me.bio = document.getElementById('editBio').value.trim();
+    me.work = document.getElementById('editWork').value.trim();
+    me.education = document.getElementById('editEdu').value.trim();
+    me.location = document.getElementById('editLocation').value.trim();
+    me.relationship = document.getElementById('editRelationship').value;
+    saveProfile(me);
+    closeModal('editModal');
+    updateUI();
+    toast('Profile updated successfully! ✨');
+}
+
+function openCreateModal() { openModal('createPostModal'); }
+
+function submitProfilePost() {
+    const text = document.getElementById('postContentInput').value.trim();
+    if (!text) return;
+    const me = getProfile();
+    const posts = getPosts();
+    posts.unshift({
+        id: Date.now(),
+        author: me.name,
+        avatar: me.avatar,
+        text: text,
+        time: "Just now",
+        likes: 0,
+        liked: false,
+        comments: [],
+        shares: 0,
+        isOwn: true
+    });
+    savePosts(posts);
+    closeModal('createPostModal');
+    document.getElementById('postContentInput').value = '';
+    renderUserPosts();
+    updateUI();
+    toast('Post shared! 🎉');
+}
+
+// Cover & Avatar Uploads
+document.getElementById('coverFileInput').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = (ev) => {
+        localStorage.setItem(COVER_KEY, ev.target.result);
+        document.getElementById('coverPhoto').style.backgroundImage = `url('${ev.target.result}')`;
+        toast('Cover photo updated! 🎨');
+    };
+    r.readAsDataURL(file);
+});
+
+document.getElementById('avatarFileInput').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = (ev) => {
+        const me = getProfile();
+        me.avatar = ev.target.result;
+        saveProfile(me);
+        updateUI();
+        toast('Profile picture updated! 📸');
+    };
+    r.readAsDataURL(file);
+});
+
+function openCoverModal() {
+    document.getElementById('coverFileInput').click();
+}
+
+// Tabs
+function switchTab(t) {
+    document.querySelectorAll('.profile-tab').forEach(el => el.classList.toggle('active', el.getAttribute('data-tab') === t));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `panel-${t}`));
+}
+
+// AI Floating Chat
+const activeChats = {};
+function openChat(userId) {
+    const members = getAllMembers();
+    const m = members.find(x => x.id === userId) || members[0];
+    if (!m) return;
+    if (activeChats[m.id]) return;
+    activeChats[m.id] = true;
+
+    let history = [];
+    try {
+        const stored = localStorage.getItem(CHATS_PREFIX + m.id);
+        if (stored) history = JSON.parse(stored);
+    } catch(e) {}
+    if (history.length === 0) {
+        history = [{ from: 'them', text: `Hey there! How's your day going? Great to connect with you! 👋` }];
+    }
+
+    const dock = document.getElementById('chatDock');
+    const div = document.createElement('div');
+    div.className = 'chat-window';
+    div.id = `chatBox-${m.id}`;
+    div.innerHTML = `
+        <div class="chat-header">
+            <div class="chat-user">
+                <img class="chat-user-pic" src="${m.avatar}">
+                <div><strong>${escapeHtml(m.name)}</strong></div>
+            </div>
+            <button onclick="closeChat('${m.id}')">✕</button>
+        </div>
+        <div class="chat-messages" id="msgs-${m.id}">
+            ${history.map(msg => `
+                <div class="msg ${msg.from === 'me' ? 'msg-me' : 'msg-them'}">${escapeHtml(msg.text)}</div>
+            `).join('')}
+            <div class="typing-bubble" id="typing-${m.id}">
+                <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+            </div>
+        </div>
+        <div class="chat-input-bar">
+            <input type="text" id="chatInp-${m.id}" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendChatMessage('${m.id}')">
+            <button class="btn-save" style="padding:4px 12px;font-size:12px;" onclick="sendChatMessage('${m.id}')">Send</button>
+        </div>
+    `;
+    dock.appendChild(div);
+}
+
+function sendChatMessage(userId) {
+    const inp = document.getElementById(`chatInp-${userId}`);
+    if (!inp || !inp.value.trim()) return;
+    const text = inp.value.trim();
+    const members = getAllMembers();
+    const m = members.find(x => x.id === userId);
+
+    const msgs = document.getElementById(`msgs-${userId}`);
+    const typing = document.getElementById(`typing-${userId}`);
+
+    const myMsg = document.createElement('div');
+    myMsg.className = 'msg msg-me';
+    myMsg.textContent = text;
+    msgs.insertBefore(myMsg, typing);
+    inp.value = '';
+    msgs.scrollTop = msgs.scrollHeight;
+
+    let history = [];
+    try { history = JSON.parse(localStorage.getItem(CHATS_PREFIX + userId)) || []; } catch(e){}
+    history.push({ from: 'me', text });
+    localStorage.setItem(CHATS_PREFIX + userId, JSON.stringify(history));
+
+    typing.style.display = 'flex';
+    msgs.scrollTop = msgs.scrollHeight;
+
+    setTimeout(() => {
+        typing.style.display = 'none';
+        const replies = [
+            "Totally agree with you! That's awesome 🙌",
+            "Great to talk with you! Let's build something cool together.",
+            "Haha, nice! What project are you working on right now? 💻",
+            "Sounds like a plan! Talk to you soon ✨"
+        ];
+        const rep = replies[Math.floor(Math.random() * replies.length)];
+        const themMsg = document.createElement('div');
+        themMsg.className = 'msg msg-them';
+        themMsg.textContent = rep;
+        msgs.insertBefore(themMsg, typing);
+        msgs.scrollTop = msgs.scrollHeight;
+        history.push({ from: 'them', text: rep });
+        localStorage.setItem(CHATS_PREFIX + userId, JSON.stringify(history));
+    }, 1200);
+}
+
+function closeChat(userId) {
+    delete activeChats[userId];
+    const el = document.getElementById(`chatBox-${userId}`);
+    if (el) el.remove();
+}
+
+function openLightbox(src) {
+    document.getElementById('lightboxImg').src = src;
+    openModal('lightboxModal');
+}
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+let toastTimer = null;
+function toast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastText').textContent = msg;
+    t.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function escapeHtml(t) {
+    if (!t) return '';
+    const d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+}
+
+// ==================== WEB CALCULATOR ENGINE ====================
+let calcExpression = '';
+let calcCurrentVal = '0';
+let calcHasEvaluated = false;
+let calcHistory = [];
+
+function initCalc() {
+    try {
+        const stored = localStorage.getItem('socialvibe_calc_history');
+        if (stored) calcHistory = JSON.parse(stored);
+    } catch(e) {}
+    renderCalcHistory();
+}
+
+function toggleCalculator() {
+    const win = document.getElementById('calculatorWindow');
+    if (!win) return;
+    const isHidden = win.style.display === 'none' || win.style.display === '';
+    win.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) {
+        document.getElementById('calcHistoryDrawer').style.display = 'none';
+    }
+}
+
+function minimizeCalculator() {
+    const win = document.getElementById('calculatorWindow');
+    if (win) win.style.display = 'none';
+}
+
+function toggleCalcScientific() {
+    const row = document.getElementById('calcSciRow');
+    const btn = document.getElementById('btnCalcSciToggle');
+    if (!row) return;
+    const isHidden = row.style.display === 'none' || row.style.display === '';
+    row.style.display = isHidden ? 'grid' : 'none';
+    if (btn) btn.style.color = isHidden ? 'var(--primary)' : 'var(--text-secondary)';
+}
+
+function toggleCalcHistory() {
+    const d = document.getElementById('calcHistoryDrawer');
+    if (!d) return;
+    d.style.display = (d.style.display === 'none' || d.style.display === '') ? 'flex' : 'none';
+}
+
+function updateCalcDisplay() {
+    const exprEl = document.getElementById('calcExpr');
+    const valEl = document.getElementById('calcVal');
+    if (exprEl) exprEl.textContent = calcExpression;
+    if (valEl) valEl.textContent = calcCurrentVal;
+}
+
+function calcInput(char) {
+    if (calcHasEvaluated) {
+        if (!isNaN(char) || char === '.') {
+            calcCurrentVal = '0';
+            calcExpression = '';
+        }
+        calcHasEvaluated = false;
+    }
+
+    if (char === '.') {
+        if (calcCurrentVal.includes('.')) return;
+        calcCurrentVal += '.';
+    } else if (char === '(' || char === ')') {
+        if (calcCurrentVal === '0') {
+            calcCurrentVal = char;
+        } else {
+            calcCurrentVal += char;
+        }
+    } else {
+        if (calcCurrentVal === '0' || calcCurrentVal === 'Error') {
+            calcCurrentVal = char;
+        } else {
+            calcCurrentVal += char;
+        }
+    }
+    updateCalcDisplay();
+}
+
+function calcOperator(op) {
+    const opDisplay = op === '*' ? '×' : (op === '/' ? '÷' : op);
+    if (calcHasEvaluated) {
+        calcExpression = calcCurrentVal + ' ' + opDisplay + ' ';
+        calcHasEvaluated = false;
+    } else {
+        calcExpression += (calcCurrentVal ? calcCurrentVal : '0') + ' ' + opDisplay + ' ';
+    }
+    calcCurrentVal = '0';
+    updateCalcDisplay();
+}
+
+function calcCalculate() {
+    try {
+        let fullExpr = (calcExpression + calcCurrentVal).trim();
+        if (!fullExpr) return;
+
+        let sanitized = fullExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+        
+        if (!/^[0-9+\-*/().\s%]+$/.test(sanitized)) {
+            calcCurrentVal = 'Error';
+            updateCalcDisplay();
+            return;
+        }
+
+        sanitized = sanitized.replace(/([0-9.]+)%/g, '($1/100)');
+
+        const result = Function('"use strict"; return (' + sanitized + ')')();
+        
+        if (!isFinite(result)) {
+            calcCurrentVal = 'Cannot divide by 0';
+        } else {
+            calcCurrentVal = String(Math.round(result * 100000000) / 100000000);
+            
+            calcHistory.unshift({
+                expr: fullExpr,
+                res: calcCurrentVal,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+            if (calcHistory.length > 20) calcHistory.pop();
+            localStorage.setItem('socialvibe_calc_history', JSON.stringify(calcHistory));
+            renderCalcHistory();
+        }
+
+        calcExpression = fullExpr + ' =';
+        calcHasEvaluated = true;
+    } catch(err) {
+        calcCurrentVal = 'Error';
+    }
+    updateCalcDisplay();
+}
+
+function calcClearAll() {
+    calcExpression = '';
+    calcCurrentVal = '0';
+    calcHasEvaluated = false;
+    updateCalcDisplay();
+}
+
+function calcClearEntry() {
+    calcCurrentVal = '0';
+    updateCalcDisplay();
+}
+
+function calcBackspace() {
+    if (calcHasEvaluated) {
+        calcClearAll();
+        return;
+    }
+    if (calcCurrentVal.length > 1) {
+        calcCurrentVal = calcCurrentVal.slice(0, -1);
+    } else {
+        calcCurrentVal = '0';
+    }
+    updateCalcDisplay();
+}
+
+function calcNegate() {
+    if (calcCurrentVal === '0' || calcCurrentVal === 'Error') return;
+    if (calcCurrentVal.startsWith('-')) {
+        calcCurrentVal = calcCurrentVal.substring(1);
+    } else {
+        calcCurrentVal = '-' + calcCurrentVal;
+    }
+    updateCalcDisplay();
+}
+
+function calcSci(fn) {
+    const val = parseFloat(calcCurrentVal);
+    if (isNaN(val)) return;
+    let res = 0;
+    let expr = '';
+
+    switch(fn) {
+        case 'sin':
+            res = Math.sin(val * Math.PI / 180);
+            expr = `sin(${val}°)`;
+            break;
+        case 'cos':
+            res = Math.cos(val * Math.PI / 180);
+            expr = `cos(${val}°)`;
+            break;
+        case 'tan':
+            res = Math.tan(val * Math.PI / 180);
+            expr = `tan(${val}°)`;
+            break;
+        case 'sqrt':
+            if (val < 0) { calcCurrentVal = 'Invalid Input'; updateCalcDisplay(); return; }
+            res = Math.sqrt(val);
+            expr = `√(${val})`;
+            break;
+        case 'sqr':
+            res = Math.pow(val, 2);
+            expr = `sqr(${val})`;
+            break;
+        case 'inv':
+            if (val === 0) { calcCurrentVal = 'Cannot divide by 0'; updateCalcDisplay(); return; }
+            res = 1 / val;
+            expr = `1/(${val})`;
+            break;
+        case 'pi':
+            res = Math.PI;
+            expr = 'π';
+            break;
+    }
+
+    calcCurrentVal = String(Math.round(res * 100000000) / 100000000);
+    calcExpression = expr + ' =';
+    calcHasEvaluated = true;
+    updateCalcDisplay();
+}
+
+function renderCalcHistory() {
+    const list = document.getElementById('calcHistoryList');
+    if (!list) return;
+    if (calcHistory.length === 0) {
+        list.innerHTML = '<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:12px;">No calculations yet</div>';
+        return;
+    }
+    list.innerHTML = calcHistory.map((item) => `
+        <div class="calc-hist-item" onclick="loadCalcHistoryItem('${escapeHtml(item.res)}')">
+            <div class="calc-hist-expr">${escapeHtml(item.expr)}</div>
+            <div class="calc-hist-res">= ${escapeHtml(item.res)}</div>
+        </div>
+    `).join('');
+}
+
+function loadCalcHistoryItem(val) {
+    calcCurrentVal = val;
+    calcExpression = '';
+    calcHasEvaluated = true;
+    updateCalcDisplay();
+    document.getElementById('calcHistoryDrawer').style.display = 'none';
+}
+
+function clearCalcHistory() {
+    calcHistory = [];
+    localStorage.removeItem('socialvibe_calc_history');
+    renderCalcHistory();
+    toast('Calculator history cleared 🧹');
+}
+
+function copyCalcResult() {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(calcCurrentVal).then(() => {
+            toast(`Result ${calcCurrentVal} copied to clipboard! 📋`);
+        }).catch(() => {});
+    } else {
+        toast(`Result: ${calcCurrentVal}`);
+    }
+}
+
+function shareCalcToFeed() {
+    const full = calcExpression ? `${calcExpression} ${calcCurrentVal}` : `Calculated result: ${calcCurrentVal}`;
+    const txt = `🧮 Web Calculator Calculation:\n${full}`;
+    
+    if (typeof openCreateModal === 'function') {
+        openCreateModal();
+        const inp = document.getElementById('postContentInput');
+        if (inp) inp.value = txt;
+        minimizeCalculator();
+        toast('Calculator result added to new post! 📝');
+    }
+}
+
+function sendCalcToChat() {
+    const full = calcExpression ? `${calcExpression} ${calcCurrentVal}` : `Calculated: ${calcCurrentVal}`;
+    const chatInputs = document.querySelectorAll('.chat-input-bar input');
+    if (chatInputs.length > 0) {
+        const firstInp = chatInputs[0];
+        firstInp.value = `🧮 ${full}`;
+        firstInp.focus();
+        toast('Calculation pasted into active chat! 💬');
+    } else {
+        const members = (typeof getAllMembers === 'function') ? getAllMembers() : [];
+        if (members.length > 0 && typeof openChat === 'function') {
+            openChat(members[0].id);
+            setTimeout(() => {
+                const inp = document.getElementById(`chatInp-${members[0].id}`);
+                if (inp) {
+                    inp.value = `🧮 ${full}`;
+                    inp.focus();
+                }
+            }, 300);
+            toast(`Chat opened with ${members[0].name} & result pasted!`);
+        } else {
+            toast(`Calculated: ${full}`);
+        }
+    }
+}
+
+window.addEventListener('keydown', (e) => {
+    const win = document.getElementById('calculatorWindow');
+    if (!win || win.style.display === 'none' || win.style.display === '') return;
+    
+    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+    if (!isNaN(e.key)) {
+        calcInput(e.key);
+    } else if (['+', '-', '*', '/'].includes(e.key)) {
+        calcOperator(e.key);
+    } else if (e.key === 'Enter' || e.key === '=') {
+        e.preventDefault();
+        calcCalculate();
+    } else if (e.key === 'Backspace') {
+        calcBackspace();
+    } else if (e.key === 'Escape') {
+        calcClearAll();
+    } else if (e.key === '.') {
+        calcInput('.');
+    }
+});
+</script>
+</body>
+</html>

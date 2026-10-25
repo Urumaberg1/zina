@@ -1,0 +1,3264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connectify - Social Network</title>
+    <style>
+        /* ========== DESIGN TOKENS & THEMING ========== */
+        :root {
+            --bg: #f3f6f9;
+            --card: #ffffff;
+            --card-glass: rgba(255, 255, 255, 0.85);
+            --text: #0f1419;
+            --text-secondary: #536471;
+            --border: #e1e8ed;
+            --border-light: #eff3f4;
+            --hover-bg: #f0f3f6;
+            --input-bg: #eef2f6;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --accent: #8b5cf6;
+            --red: #ef4444;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+            --shadow-lg: 0 20px 48px rgba(0,0,0,0.14);
+            --radius-sm: 8px;
+            --radius: 12px;
+            --radius-lg: 18px;
+            --radius-full: 9999px;
+            --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.dark-mode {
+            --bg: #0b0e14;
+            --card: #151921;
+            --card-glass: rgba(21, 25, 33, 0.85);
+            --text: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border: #232936;
+            --border-light: #1c222d;
+            --hover-bg: #1e2430;
+            --input-bg: #1c222d;
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --primary-light: rgba(59, 130, 246, 0.15);
+            --accent: #a78bfa;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+            --shadow: 0 4px 12px rgba(0,0,0,0.35);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.45);
+            --shadow-lg: 0 20px 48px rgba(0,0,0,0.6);
+        }
+
+        /* ========== RESET & GLOBAL ========== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.45;
+            transition: background 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        a { text-decoration: none; color: inherit; }
+        button { cursor: pointer; font-family: inherit; border: none; outline: none; background: transparent; }
+        input, textarea, select { font-family: inherit; outline: none; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 7px; height: 7px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+        /* ========== NAVBAR ========== */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: var(--card-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            box-shadow: var(--shadow-sm); z-index: 1000;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; border-bottom: 1px solid var(--border-light);
+        }
+        .nav-left { display: flex; align-items: center; gap: 14px; }
+        .logo {
+            font-size: 24px; font-weight: 900; letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 50%, #ec4899 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; display: flex; align-items: center; gap: 8px;
+        }
+        .search-box {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--input-bg); border-radius: 50px; padding: 8px 16px;
+            width: 270px; transition: var(--transition); border: 1px solid transparent;
+            position: relative;
+        }
+        .search-box:focus-within { background: var(--card); border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        .search-box input { border: none; background: transparent; font-size: 14px; width: 100%; color: var(--text); }
+        .search-box svg { width: 17px; height: 17px; fill: var(--text-secondary); flex-shrink: 0; }
+        .search-clear { position: absolute; right: 12px; font-size: 13px; color: var(--text-secondary); cursor: pointer; display: none; }
+
+        .nav-center { display: flex; align-items: center; gap: 6px; }
+        .nav-btn {
+            display: flex; align-items: center; justify-content: center;
+            padding: 8px 24px; border-radius: var(--radius); color: var(--text-secondary);
+            position: relative; transition: var(--transition); height: 50px;
+        }
+        .nav-btn svg { width: 22px; height: 22px; fill: currentColor; }
+        .nav-btn:hover { background: var(--hover-bg); color: var(--text); }
+        .nav-btn.active { color: var(--primary); background: var(--primary-light); }
+        .nav-badge {
+            position: absolute; top: 6px; right: 18px;
+            background: var(--red); color: white; font-size: 11px; font-weight: 700;
+            min-width: 18px; height: 18px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center; padding: 0 4px;
+            border: 2px solid var(--card); animation: pulseBadge 2s infinite;
+        }
+        @keyframes pulseBadge {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .nav-right { display: flex; align-items: center; gap: 10px; position: relative; }
+        .icon-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--hover-bg); display: flex; align-items: center; justify-content: center;
+            color: var(--text); transition: var(--transition); position: relative;
+        }
+        .icon-btn:hover { background: var(--border); transform: translateY(-1px); }
+        .icon-btn svg { width: 19px; height: 19px; fill: currentColor; }
+
+        .user-pic {
+            width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+            border: 2px solid transparent; cursor: pointer; transition: var(--transition);
+        }
+        .user-pic:hover { transform: scale(1.06); border-color: var(--primary); }
+
+        /* ========== DROPDOWNS & NOTIFICATIONS ========== */
+        .popover {
+            position: absolute; top: 54px; right: 0;
+            background: var(--card); border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg); width: 350px; max-height: 490px;
+            overflow-y: auto; z-index: 1200; display: none;
+            border: 1px solid var(--border);
+            animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .popover.open { display: block; }
+        @keyframes popIn {
+            from { opacity: 0; transform: translateY(-10px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .popover-header {
+            padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border-light); position: sticky; top: 0; background: var(--card); z-index: 2;
+        }
+        .popover-header h3 { font-size: 17px; font-weight: 800; }
+        .popover-header a { font-size: 13px; color: var(--primary); font-weight: 600; cursor: pointer; }
+        .popover-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 18px;
+            cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--border-light);
+        }
+        .popover-item:last-child { border-bottom: none; }
+        .popover-item:hover { background: var(--hover-bg); }
+        .popover-item.unread { background: var(--primary-light); }
+        .popover-item.unread strong { font-weight: 700; color: var(--primary); }
+        .popover-avatar {
+            width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+        }
+        .popover-info { flex: 1; min-width: 0; }
+        .popover-info strong { font-size: 13.5px; display: block; line-height: 1.35; }
+        .popover-info span { font-size: 12px; color: var(--text-secondary); display: block; margin-top: 2px; }
+        .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+
+        /* Profile Menu Popover */
+        .profile-menu { width: 280px; padding: 10px; }
+        .profile-menu-user {
+            display: flex; align-items: center; gap: 12px; padding: 10px;
+            border-radius: var(--radius); cursor: pointer; transition: background 0.15s;
+        }
+        .profile-menu-user:hover { background: var(--hover-bg); }
+        .profile-menu-btn {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+            width: 100%; border-radius: var(--radius); font-size: 14px; font-weight: 600;
+            color: var(--text); cursor: pointer; transition: background 0.15s;
+        }
+        .profile-menu-btn:hover { background: var(--hover-bg); }
+        .profile-menu-btn svg { width: 19px; height: 19px; fill: var(--text-secondary); }
+
+        /* ========== MAIN LAYOUT ========== */
+        .main {
+            display: flex; gap: 24px; max-width: 1340px;
+            margin: 72px auto 0; padding: 0 16px;
+        }
+        .sidebar {
+            width: 290px; flex-shrink: 0; position: sticky; top: 76px;
+            height: calc(100vh - 84px); overflow-y: auto; padding-bottom: 24px;
+        }
+        .feed {
+            flex: 1; max-width: 680px; margin: 0 auto;
+            display: flex; flex-direction: column; gap: 18px; padding-bottom: 60px;
+        }
+        .sidebar-r {
+            width: 310px; flex-shrink: 0; position: sticky; top: 76px;
+            height: calc(100vh - 84px); overflow-y: auto; padding-bottom: 24px;
+        }
+
+        /* ========== CARDS ========== */
+        .card {
+            background: var(--card); border-radius: var(--radius-lg);
+            box-shadow: var(--shadow); overflow: hidden;
+            border: 1px solid var(--border-light);
+            transition: var(--transition);
+        }
+        .card-pad { padding: 18px; }
+        .card h4 { font-size: 16px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+        .card h4 svg { width: 18px; height: 18px; vertical-align: -3px; margin-right: 6px; }
+
+        /* Mini Profile Card */
+        .profile-mini-cover {
+            height: 85px; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 60%, #ec4899 100%);
+            position: relative;
+        }
+        .profile-mini-body { padding: 0 16px 16px; text-align: center; margin-top: -36px; }
+        .profile-mini-avatar {
+            width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+            border: 4px solid var(--card); margin: 0 auto;
+            box-shadow: var(--shadow-md); cursor: pointer; transition: transform 0.2s;
+        }
+        .profile-mini-avatar:hover { transform: scale(1.06); }
+        .profile-mini-body h3 { font-size: 16px; font-weight: 800; margin-top: 8px; cursor: pointer; }
+        .profile-mini-body p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+        .profile-mini-stats {
+            display: flex; justify-content: space-around;
+            margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-light);
+        }
+        .profile-mini-stats div { text-align: center; cursor: pointer; }
+        .profile-mini-stats strong { display: block; font-size: 16px; color: var(--text); }
+        .profile-mini-stats span { font-size: 12px; color: var(--text-secondary); }
+
+        /* Sidebar Navigation Menu */
+        .nav-menu-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 14px; border-radius: var(--radius);
+            font-size: 14.5px; font-weight: 600; color: var(--text);
+            transition: var(--transition); cursor: pointer; width: 100%; text-align: left;
+        }
+        .nav-menu-item:hover { background: var(--hover-bg); transform: translateX(3px); }
+        .nav-menu-item .menu-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; color: white;
+        }
+        .nav-menu-item .menu-icon svg { width: 19px; height: 19px; fill: currentColor; }
+
+        .btn-add-profile {
+            width: 100%; padding: 10px; margin-top: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white; font-weight: 700; font-size: 13.5px; border-radius: var(--radius);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); transition: var(--transition);
+        }
+        .btn-add-profile:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35); }
+
+        /* Trending Tags */
+        .trending-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer;
+            transition: background 0.15s;
+        }
+        .trending-item:hover { background: var(--hover-bg); }
+        .trending-item strong { font-size: 13.5px; color: var(--primary); }
+        .trending-item small { font-size: 12px; color: var(--text-secondary); }
+
+        /* Filter Banner */
+        .filter-banner {
+            background: var(--primary-light); border: 1px solid var(--primary);
+            border-radius: var(--radius); padding: 10px 16px; display: none;
+            align-items: center; justify-content: space-between; font-size: 14px;
+        }
+        .filter-banner button {
+            background: var(--primary); color: white; padding: 4px 12px;
+            border-radius: var(--radius-full); font-size: 12px; font-weight: 700;
+        }
+
+        /* ========== STORIES ========== */
+        .stories-row {
+            display: flex; gap: 12px; padding: 16px;
+            overflow-x: auto; scrollbar-width: none;
+        }
+        .stories-row::-webkit-scrollbar { display: none; }
+        .story {
+            flex-shrink: 0; width: 115px; height: 195px;
+            border-radius: var(--radius-lg); position: relative;
+            overflow: hidden; cursor: pointer; transition: transform 0.25s, box-shadow 0.25s;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border-light);
+        }
+        .story:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .story-img {
+            width: 100%; height: 100%; object-fit: cover; transition: transform 0.35s ease;
+        }
+        .story:hover .story-img { transform: scale(1.08); }
+        .story-overlay {
+            position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.85) 100%);
+            display: flex; flex-direction: column; justify-content: space-between; padding: 10px;
+        }
+        .story-avatar-wrap {
+            width: 38px; height: 38px; border-radius: 50%;
+            padding: 2px; background: linear-gradient(135deg, #f59e0b, #ec4899, var(--primary));
+            display: flex; align-items: center; justify-content: center;
+        }
+        .story-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+        .story-overlay span { color: white; font-size: 12px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+
+        .story-create .story-plus {
+            position: absolute; bottom: 44px; left: 50%; transform: translateX(-50%);
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--primary); border: 3px solid var(--card);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow);
+        }
+        .story-create .story-plus svg { width: 20px; height: 20px; fill: white; }
+
+        /* ========== CREATE POST ========== */
+        .create-post-top { display: flex; align-items: center; gap: 12px; padding: 16px 16px 12px; }
+        .create-input {
+            flex: 1; padding: 12px 20px;
+            background: var(--input-bg); border-radius: 50px;
+            font-size: 15px; color: var(--text-secondary); cursor: pointer;
+            transition: var(--transition); text-align: left;
+        }
+        .create-input:hover { background: var(--hover-bg); }
+        .create-actions { display: flex; border-top: 1px solid var(--border-light); }
+        .create-action-btn {
+            flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 11px; font-size: 14px; font-weight: 600; color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        .create-action-btn:hover { background: var(--hover-bg); color: var(--text); }
+        .create-action-btn svg { width: 20px; height: 20px; }
+
+        /* ========== POST CARD ========== */
+        .post { animation: slideUp 0.3s ease; position: relative; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .post-header { display: flex; align-items: center; gap: 12px; padding: 16px 16px 8px; }
+        .post-avatar {
+            width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+            cursor: pointer; transition: transform 0.2s; border: 1.5px solid var(--border);
+        }
+        .post-avatar:hover { transform: scale(1.06); }
+        .post-info { flex: 1; min-width: 0; }
+        .post-author { font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .post-author:hover { text-decoration: underline; }
+        .verified-badge { width: 15px; height: 15px; fill: var(--primary); }
+        .post-meta { font-size: 12.5px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; margin-top: 1px; }
+
+        .post-menu-trigger {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary); transition: background 0.2s; position: relative;
+        }
+        .post-menu-trigger:hover { background: var(--hover-bg); }
+        .post-menu-trigger svg { width: 20px; height: 20px; fill: currentColor; }
+
+        .post-dropdown {
+            display: none; position: absolute; top: 100%; right: 0;
+            background: var(--card); border-radius: var(--radius);
+            box-shadow: var(--shadow-lg); min-width: 210px; z-index: 50;
+            overflow: hidden; border: 1px solid var(--border);
+        }
+        .post-dropdown.open { display: block; animation: popIn 0.15s ease-out; }
+        .post-dropdown button {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 16px; font-size: 14px; color: var(--text);
+            width: 100%; text-align: left; transition: background 0.15s; font-weight: 500;
+        }
+        .post-dropdown button:hover { background: var(--hover-bg); }
+        .post-dropdown button svg { width: 17px; height: 17px; fill: currentColor; }
+        .post-dropdown .text-red { color: var(--red); }
+
+        .post-text { padding: 4px 16px 12px; font-size: 15px; line-height: 1.55; white-space: pre-wrap; word-wrap: break-word; }
+        .post-image-wrap {
+            width: 100%; overflow: hidden; cursor: pointer; max-height: 540px;
+            position: relative; background: #000;
+        }
+        .post-image-wrap img { width: 100%; display: block; object-fit: cover; transition: filter 0.2s, transform 0.3s; }
+        .post-image-wrap:hover img { filter: brightness(0.97); }
+
+        /* Stats Bar */
+        .post-stats {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 16px; font-size: 13.5px; color: var(--text-secondary);
+        }
+        .post-stats-left { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .like-emoji { display: inline-flex; }
+        .like-emoji-icon {
+            width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--card);
+            display: flex; align-items: center; justify-content: center; font-size: 11px;
+            margin-right: -4px;
+        }
+        .post-stats-right { display: flex; gap: 12px; }
+        .post-stats-right span { cursor: pointer; }
+        .post-stats-right span:hover { text-decoration: underline; }
+
+        /* Action Bar & Reactions Bar */
+        .post-action-bar {
+            display: flex; margin: 0 16px; padding: 4px 0;
+            border-top: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border-light);
+            position: relative;
+        }
+        .post-action {
+            flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+            padding: 8px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+            color: var(--text-secondary); transition: var(--transition); position: relative;
+        }
+        .post-action:hover { background: var(--hover-bg); color: var(--text); }
+        .post-action svg { width: 19px; height: 19px; fill: currentColor; }
+        .post-action.liked { color: var(--primary); }
+        .post-action.liked svg { fill: var(--primary); }
+        .post-action.liked-love { color: var(--red); }
+        .post-action.liked-love svg { fill: var(--red); }
+
+        /* Floating Reactions Picker */
+        .reactions-box {
+            position: absolute; bottom: 44px; left: 8px;
+            background: var(--card); border-radius: 50px;
+            box-shadow: var(--shadow-lg); padding: 4px 8px;
+            display: none; gap: 6px; z-index: 100; border: 1px solid var(--border);
+            animation: bounceIn 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        .reactions-box.show { display: flex; }
+        @keyframes bounceIn {
+            from { transform: scale(0.6) translateY(10px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .react-btn {
+            font-size: 24px; padding: 4px 6px; border-radius: 50%;
+            transition: transform 0.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            line-height: 1; cursor: pointer;
+        }
+        .react-btn:hover { transform: scale(1.4) translateY(-4px); }
+
+        /* Comments Section */
+        .comments-area { padding: 12px 16px 16px; display: none; }
+        .comments-area.open { display: block; }
+        .comment-item { display: flex; gap: 10px; margin-bottom: 10px; animation: fadeIn 0.2s; }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        .comment-avatar {
+            width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+        }
+        .comment-bubble {
+            background: var(--hover-bg); border-radius: 18px; padding: 8px 14px;
+            display: inline-block; max-width: calc(100% - 44px);
+        }
+        .comment-bubble strong { font-size: 13px; display: block; cursor: pointer; }
+        .comment-bubble strong:hover { text-decoration: underline; }
+        .comment-bubble p { font-size: 13.5px; margin-top: 2px; word-wrap: break-word; }
+        .comment-meta {
+            display: flex; gap: 12px; padding: 3px 14px;
+            font-size: 12px; color: var(--text-secondary); font-weight: 600;
+        }
+        .comment-meta span { cursor: pointer; }
+        .comment-meta span:hover { text-decoration: underline; }
+        .comment-meta .c-liked { color: var(--primary); }
+
+        .comment-input-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+        .comment-input-row input {
+            flex: 1; padding: 9px 16px;
+            background: var(--input-bg); border: 1px solid transparent; border-radius: 50px;
+            font-size: 13.5px; outline: none; transition: var(--transition); color: var(--text);
+        }
+        .comment-input-row input:focus { background: var(--card); border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+        .send-btn {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--primary); color: white;
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition); flex-shrink: 0;
+        }
+        .send-btn:hover { background: var(--primary-hover); transform: scale(1.06); }
+        .send-btn svg { width: 16px; height: 16px; fill: white; }
+
+        /* ========== RIGHT SIDEBAR & CONTACTS ========== */
+        .online-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .online-header h4 { font-size: 16px; font-weight: 800; }
+        .online-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 8px 10px; border-radius: var(--radius); cursor: pointer;
+            transition: var(--transition);
+        }
+        .online-item:hover { background: var(--hover-bg); transform: translateX(3px); }
+        .online-avatar-wrap { position: relative; }
+        .online-avatar {
+            width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
+        }
+        .online-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--green); border: 2px solid var(--card);
+            position: absolute; bottom: 0; right: 0;
+        }
+        .online-info { flex: 1; min-width: 0; }
+        .online-info strong { font-size: 13.5px; font-weight: 700; display: block; }
+        .online-info small { font-size: 11.5px; color: var(--text-secondary); display: block; }
+
+        /* ========== REALISTIC AI MESSENGER CHAT DOCK ========== */
+        .chat-dock {
+            position: fixed; bottom: 0; right: 40px; z-index: 1500;
+            display: flex; gap: 14px; align-items: flex-end;
+        }
+        .chat-window {
+            width: 330px; height: 420px; background: var(--card);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+            display: flex; flex-direction: column; overflow: hidden;
+            animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .chat-header {
+            padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--border-light);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .chat-user { display: flex; align-items: center; gap: 10px; }
+        .chat-user-pic { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+        .chat-user strong { font-size: 14px; display: block; }
+        .chat-user small { color: var(--green); font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+        .chat-user small::before { content:''; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+        .chat-controls { display: flex; gap: 4px; }
+        .chat-controls button { width: 28px; height: 28px; border-radius: 50%; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+        .chat-controls button:hover { background: var(--hover-bg); }
+        .chat-messages {
+            flex: 1; padding: 12px; overflow-y: auto; display: flex;
+            flex-direction: column; gap: 10px; background: var(--bg);
+        }
+        .msg { max-width: 78%; padding: 9px 13px; border-radius: 18px; font-size: 13.5px; line-height: 1.4; word-wrap: break-word; }
+        .msg-them { align-self: flex-start; background: var(--card); color: var(--text); border-bottom-left-radius: 4px; box-shadow: var(--shadow-sm); }
+        .msg-me { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+        .typing-bubble {
+            align-self: flex-start; background: var(--card); padding: 8px 12px;
+            border-radius: 16px; border-bottom-left-radius: 4px; display: none; align-items: center; gap: 4px;
+            box-shadow: var(--shadow-sm);
+        }
+        .typing-dot {
+            width: 6px; height: 6px; border-radius: 50%; background: var(--text-secondary);
+            animation: bounceDot 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounceDot { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        .chat-input-bar {
+            padding: 8px 12px; background: var(--card); border-top: 1px solid var(--border-light);
+            display: flex; gap: 8px; align-items: center;
+        }
+        .chat-input-bar input {
+            flex: 1; padding: 8px 14px; background: var(--input-bg);
+            border: none; border-radius: 50px; font-size: 13.5px; color: var(--text);
+        }
+
+        /* ========== MODALS ========== */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+            z-index: 2000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.25s ease; padding: 16px;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-box {
+            background: var(--card); border-radius: var(--radius-lg);
+            width: 100%; max-width: 520px; box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            transform: scale(0.94) translateY(12px); transition: all 0.25s ease;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal-overlay.active .modal-box { transform: scale(1) translateY(0); }
+        .modal-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+        }
+        .modal-head h3 { font-size: 19px; font-weight: 800; }
+        .modal-close {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--hover-bg); font-size: 18px; color: var(--text-secondary);
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .modal-close:hover { background: var(--border); color: var(--text); }
+        .modal-body { padding: 20px; }
+        .modal-foot { padding: 14px 20px 18px; border-top: 1px solid var(--border-light); }
+
+        .modal-field { margin-bottom: 14px; }
+        .modal-field label { display: block; font-size: 13.5px; font-weight: 700; margin-bottom: 6px; }
+        .modal-field input, .modal-field textarea {
+            width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); font-size: 14px; color: var(--text);
+            background: var(--card); transition: border-color 0.2s;
+        }
+        .modal-field input:focus, .modal-field textarea:focus { border-color: var(--primary); }
+
+        .btn-post {
+            width: 100%; padding: 11px; border-radius: var(--radius);
+            background: var(--primary); color: white; font-size: 15px;
+            font-weight: 700; transition: var(--transition);
+        }
+        .btn-post:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-post:disabled { background: var(--border-light); color: var(--text-secondary); cursor: not-allowed; }
+
+        /* Toast */
+        .toast-msg {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #181920; color: white; padding: 12px 24px;
+            border-radius: 50px; font-size: 14px; font-weight: 600;
+            box-shadow: var(--shadow-lg); z-index: 4000;
+            opacity: 0; transition: all 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.12);
+        }
+        .toast-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* Responsive */
+        @media (max-width: 1200px) { .sidebar-r { display: none; } }
+        @media (max-width: 992px) {
+            .sidebar { display: none; }
+            .main { justify-content: center; }
+            .feed { max-width: 620px; }
+            .nav-center { display: none; }
+        }
+        @media (max-width: 600px) {
+            .search-box { display: none; }
+            .create-action-btn span { display: none; }
+            .post-action span { display: none; }
+            .chat-window { width: 300px; right: 10px; }
+        }
+        /* ========== FIXED WEB CALCULATOR (اله حاسبه ثابته) ========== */
+        .fixed-calc-wrapper {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            z-index: 9999;
+            font-family: inherit;
+        }
+        .calc-launcher-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 20px;
+            background: linear-gradient(135deg, #2563eb, #8b5cf6);
+            color: #ffffff;
+            border: none;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .calc-launcher-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.55);
+        }
+        .calc-launcher-icon { font-size: 19px; }
+        .calculator-window {
+            position: absolute;
+            bottom: 56px;
+            left: 0;
+            width: 330px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            animation: calcSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            color: var(--text);
+            z-index: 10001;
+        }
+        @keyframes calcSlideIn {
+            from { opacity: 0; transform: translateY(16px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .calc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            background: var(--hover-bg);
+            border-bottom: 1px solid var(--border);
+        }
+        .calc-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13.5px;
+        }
+        .calc-badge {
+            font-size: 10px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+        .calc-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .calc-ctrl-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        .calc-ctrl-btn:hover {
+            background: var(--border-light);
+            color: var(--text);
+        }
+        .calc-body {
+            padding: 14px;
+            position: relative;
+        }
+        .calc-display {
+            background: var(--input-bg);
+            border-radius: 12px;
+            padding: 12px 14px;
+            text-align: right;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+        .calc-expr {
+            font-size: 12px;
+            color: var(--text-secondary);
+            min-height: 16px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .calc-val {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            white-space: nowrap;
+            overflow-x: auto;
+            scrollbar-width: none;
+            margin-top: 4px;
+        }
+        .calc-val::-webkit-scrollbar { display: none; }
+        .calc-sci-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed var(--border);
+        }
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .calc-btn {
+            height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .calc-btn:hover {
+            background: var(--hover-bg);
+            transform: translateY(-1px);
+        }
+        .calc-btn:active { transform: scale(0.96); }
+        .calc-btn.op {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: rgba(37, 99, 235, 0.2);
+            font-weight: 700;
+        }
+        .calc-btn.op:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        .calc-btn.func {
+            background: var(--hover-bg);
+            color: var(--text-secondary);
+            font-size: 13.5px;
+        }
+        .calc-btn.sci {
+            height: 32px;
+            font-size: 11px;
+            background: var(--hover-bg);
+            color: var(--text-secondary);
+            border-radius: 6px;
+        }
+        .calc-btn.sci:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .calc-btn.equals {
+            background: linear-gradient(135deg, #2563eb, #8b5cf6);
+            color: #fff;
+            border: none;
+            font-weight: 700;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .calc-btn.equals:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+        }
+        .calc-footer-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-light);
+        }
+        .calc-action-btn {
+            flex: 1;
+            padding: 6px 4px;
+            font-size: 11.5px;
+            font-weight: 600;
+            background: var(--hover-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+            transition: background 0.15s;
+            text-align: center;
+        }
+        .calc-action-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        .calc-history-drawer {
+            position: absolute;
+            inset: 14px;
+            background: var(--card);
+            border-radius: 14px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            z-index: 5;
+            animation: calcSlideIn 0.2s ease;
+        }
+        .calc-hist-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        .calc-hist-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .calc-hist-item {
+            padding: 6px 8px;
+            border-radius: 6px;
+            background: var(--input-bg);
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.15s;
+        }
+        .calc-hist-item:hover { background: var(--hover-bg); }
+        .calc-hist-expr { color: var(--text-secondary); }
+        .calc-hist-res { font-weight: 700; color: var(--primary); text-align: right; }
+    </style>
+</head>
+<body>
+
+<!-- ========== TOP NAVBAR ========== -->
+<nav class="navbar">
+    <div class="nav-left">
+        <a href="index.html" class="logo">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="url(#main-logo-grad)"><defs><linearGradient id="main-logo-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2563eb"/><stop offset="50%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><circle cx="12" cy="12" r="10"/><path d="M12 6a6 6 0 00-6 6c0 2.97 2.16 5.43 5 5.91V13.5H9.5V11.5H11v-1.5c0-1.5 1-2.5 2.5-2.5h1.5v2h-1c-.5 0-.8.4-.8.8v1.2h2l-.5 2h-1.5v4.41c2.84-.48 5-2.94 5-5.91a6 6 0 00-6-6z" fill="#fff"/></svg>
+            Connectify
+        </a>
+        <div class="search-box">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="searchInput" placeholder="Search posts or friends..." oninput="handleSearch(this.value)">
+            <span class="search-clear" id="searchClear" onclick="clearSearch()">✕</span>
+        </div>
+    </div>
+
+    <!-- Center Navigation Tabs -->
+    <div class="nav-center">
+        <button class="nav-btn active" onclick="location.href='index.html'" title="Home Feed">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        </button>
+        <button class="nav-btn" onclick="openWatchModal()" title="Watch Videos">
+            <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+        </button>
+        <button class="nav-btn" onclick="openGroupsModal()" title="Groups">
+            <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        </button>
+        <button class="nav-btn" onclick="location.href='profile.html'" title="My Profile Page">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </button>
+        <button class="nav-btn" id="btnNavNotif" onclick="togglePopover('notifPopover')" title="Notifications">
+            <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+            <span class="nav-badge" id="notifBadge">3</span>
+        </button>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="nav-right">
+        <!-- Web Calculator Quick Launcher in Navbar -->
+        <button class="icon-btn" onclick="toggleCalculator()" title="Web Calculator (الآلة الحاسبة الثابتة)">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 16H6v-2h6v2zm0-4H6v-2h6v2zm0-4H6V9h6v2zm6 8h-4v-6h4v6zm0-8h-4V9h4v2z"/></svg>
+        </button>
+
+        <!-- White / Dark Theme Toggle Button -->
+        <button class="icon-btn" id="themeToggleBtn" onclick="toggleDarkMode()" title="Toggle White/Dark Mode">
+            <svg id="themeIcon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+        </button>
+
+        <!-- Messenger Drawer Button -->
+        <button class="icon-btn" onclick="togglePopover('messagesPopover')" title="Messenger Chats">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+            <span class="nav-badge" id="msgBadge">2</span>
+        </button>
+
+        <!-- Profile Avatar & Popover Menu -->
+        <div style="display:flex;align-items:center;gap:4px;">
+            <img class="user-pic" id="navAvatarPic" src="" alt="User" onclick="location.href='profile.html'" title="My Profile (Click to View Profile)" style="cursor:pointer;border:2px solid var(--primary);">
+            <button class="icon-btn" style="width:28px;height:28px;padding:3px;" onclick="togglePopover('profilePopover')" title="Account Options">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+        </div>
+
+        <!-- Notifications Popover -->
+        <div class="popover" id="notifPopover">
+            <div class="popover-header">
+                <h3>Notifications</h3>
+                <a onclick="markAllNotificationsRead()">Mark all read</a>
+            </div>
+            <div id="notifList"></div>
+        </div>
+
+        <!-- Messages Popover -->
+        <div class="popover" id="messagesPopover">
+            <div class="popover-header">
+                <h3>Messages</h3>
+                <a onclick="openCreateUserModal()">+ New Member</a>
+            </div>
+            <div id="messagesList"></div>
+        </div>
+
+        <!-- Profile Menu Popover -->
+        <div class="popover profile-menu" id="profilePopover">
+            <div class="profile-menu-user" onclick="location.href='profile.html'">
+                <img class="user-pic" id="menuUserPic" src="" alt="User">
+                <div>
+                    <strong id="menuName" style="font-size:15px;display:block;">User Name</strong>
+                    <span style="font-size:12.5px;color:var(--text-secondary);">View profile</span>
+                </div>
+            </div>
+            <div style="height:1px;background:var(--border-light);margin:6px 0;"></div>
+            <button class="profile-menu-btn" onclick="location.href='profile.html'">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                View Full Profile
+            </button>
+            <button class="profile-menu-btn" onclick="openCreateUserModal()">
+                <svg viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                Add New Person / Profile
+            </button>
+            <button class="profile-menu-btn" onclick="openSavedModal()">
+                <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+                Saved Bookmarks
+            </button>
+            <button class="profile-menu-btn" onclick="toggleDarkMode()">
+                <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+                <span id="menuThemeText">Switch to Dark Mode</span>
+            </button>
+            <div style="height:1px;background:var(--border-light);margin:6px 0;"></div>
+            <button class="profile-menu-btn" onclick="toast('Account switched successfully!'); setTimeout(()=>location.reload(), 800);">
+                <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+                Switch Account
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- ========== MAIN LAYOUT ========== -->
+<div class="main">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+        <!-- Quick Profile Card -->
+        <div class="card">
+            <div class="profile-mini-cover" id="sideCover"></div>
+            <div class="profile-mini-body">
+                <img class="profile-mini-avatar" id="sideAvatarPic" src="" alt="Profile" onclick="location.href='profile.html'">
+                <h3 id="sideName" onclick="location.href='profile.html'">User Name</h3>
+                <p id="sideBio">Welcome to Connectify!</p>
+                <div class="profile-mini-stats">
+                    <div onclick="location.href='profile.html'"><strong id="sidePostCount">0</strong><span>Posts</span></div>
+                    <div onclick="openFriendsModal()"><strong id="sideFriendsCount">8</strong><span>Friends</span></div>
+                    <div onclick="location.href='profile.html'"><strong>312</strong><span>Photos</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="card card-pad" style="margin-top:16px">
+            <a href="index.html" class="nav-menu-item">
+                <div class="menu-icon" style="background:linear-gradient(135deg,#2563eb,#8b5cf6)">
+                    <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                </div>
+                Home Feed
+            </a>
+            <a href="profile.html" class="nav-menu-item">
+                <div class="menu-icon" style="background:linear-gradient(135deg,#6366f1,#ec4899)">
+                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                </div>
+                My Profile
+            </a>
+            <button class="nav-menu-item" onclick="openFriendsModal()">
+                <div class="menu-icon" style="background:linear-gradient(135deg,#ec4899,#f43f5e)">
+                    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                </div>
+                Community Members (<span id="memberCountBadge">8</span>)
+            </button>
+            <button class="nav-menu-item" onclick="openGroupsModal()">
+                <div class="menu-icon" style="background:linear-gradient(135deg,#10b981,#06b6d4)">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                </div>
+                Groups
+            </button>
+            <button class="nav-menu-item" onclick="openWatchModal()">
+                <div class="menu-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">
+                    <svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                Watch Video
+            </button>
+            <button class="nav-menu-item" onclick="openSavedModal()">
+                <div class="menu-icon" style="background:linear-gradient(135deg,#38bdf8,#0284c7)">
+                    <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+                </div>
+                Saved Bookmarks (<span id="savedCountBadge">0</span>)
+            </button>
+            <button class="nav-menu-item" onclick="toggleCalculator()">
+                <div class="menu-icon" style="background:linear-gradient(135deg,#14b8a6,#06b6d4)">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 16H6v-2h6v2zm0-4H6v-2h6v2zm0-4H6V9h6v2zm6 8h-4v-6h4v6zm0-8h-4V9h4v2z"/></svg>
+                </div>
+                Web Calculator (الآلة الحاسبة)
+            </button>
+
+            <!-- Add New Person Button -->
+            <button class="btn-add-profile" onclick="openCreateUserModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                Add Person to Network
+            </button>
+        </div>
+
+        <!-- Trending Topics -->
+        <div class="card card-pad" style="margin-top:16px">
+            <h4>
+                <span>
+                    <svg viewBox="0 0 24 24" fill="#ec4899"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z"/></svg>
+                    Trending Topics
+                </span>
+            </h4>
+            <div class="trending-item" onclick="filterByTag('#WebDevelopment')"><strong>#WebDevelopment</strong><small>2.4k posts</small></div>
+            <div class="trending-item" onclick="filterByTag('#JavaScript')"><strong>#JavaScript</strong><small>1.9k posts</small></div>
+            <div class="trending-item" onclick="filterByTag('#FullStack')"><strong>#FullStack</strong><small>1.1k posts</small></div>
+            <div class="trending-item" onclick="filterByTag('#TechNews')"><strong>#TechNews</strong><small>3.8k posts</small></div>
+            <div class="trending-item" onclick="filterByTag('#Coding')"><strong>#Coding</strong><small>1.5k posts</small></div>
+        </div>
+    </aside>
+
+    <!-- FEED SECTION -->
+    <section class="feed">
+        <!-- Active Tag Filter Banner -->
+        <div class="filter-banner" id="filterBanner">
+            <span>Filtering posts by: <strong id="filterTagName"></strong></span>
+            <button onclick="clearSearch()">Clear Filter</button>
+        </div>
+
+        <!-- Stories Carousel with Real Photos -->
+        <div class="card">
+            <div class="stories-row" id="storiesRow"></div>
+        </div>
+
+        <!-- Create Post Card -->
+        <div class="card">
+            <div class="create-post-top">
+                <img class="user-pic" id="feedAvatarPic" src="" alt="User" onclick="openCreateModal()">
+                <button class="create-input" onclick="openCreateModal()">What's on your mind?</button>
+            </div>
+            <div class="create-actions">
+                <button class="create-action-btn" onclick="openLiveModal()">
+                    <svg viewBox="0 0 24 24" fill="#ef4444"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                    <span>Live Video</span>
+                </button>
+                <button class="create-action-btn" onclick="openCreateModal(true)">
+                    <svg viewBox="0 0 24 24" fill="#10b981"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                    <span>Photo/Video</span>
+                </button>
+                <button class="create-action-btn" onclick="openFeelingModal()">
+                    <svg viewBox="0 0 24 24" fill="#f59e0b"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+                    <span>Feeling/Activity</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Posts Feed Container -->
+        <div id="postsFeed"></div>
+    </section>
+
+    <!-- RIGHT SIDEBAR (ONLINE CONTACTS & AI CHAT) -->
+    <aside class="sidebar-r">
+        <!-- Add New Profile Fast CTA -->
+        <div class="card card-pad" style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(139,92,246,0.08));border:1px dashed var(--primary);">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <strong style="font-size:14px;display:block;">Add Anyone & Chat</strong>
+                    <span style="font-size:12px;color:var(--text-secondary);">Creates real profile & chats with AI</span>
+                </div>
+                <button class="btn-post" style="width:auto;padding:6px 14px;font-size:12.5px;" onclick="openCreateUserModal()">+ Add</button>
+            </div>
+        </div>
+
+        <!-- Online Contacts -->
+        <div class="card card-pad" style="margin-top:16px">
+            <div class="online-header">
+                <h4>Contacts (<span id="contactsCount">8</span>)</h4>
+                <button onclick="document.getElementById('searchInput').focus(); toast('Search for friends in search bar');" title="Search">
+                    <svg viewBox="0 0 24 24" fill="var(--text-secondary)" width="18" height="18"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                </button>
+            </div>
+            <div id="contactsList"></div>
+        </div>
+
+        <!-- Sponsored -->
+        <div class="card card-pad" style="margin-top:16px">
+            <div style="font-size:12.5px;color:var(--text-secondary);font-weight:700;margin-bottom:8px;">Sponsored</div>
+            <div style="display:flex;gap:12px;cursor:pointer;" onclick="openAdModal('AI Cloud Studio', 'Build and deploy machine learning models in minutes with instant GPU containers.')">
+                <div style="width:85px;height:65px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-size:24px;flex-shrink:0;">⚡</div>
+                <div>
+                    <strong style="font-size:13.5px;display:block;">AI Cloud Studio 2026</strong>
+                    <span style="font-size:12px;color:var(--text-secondary);">aicloud.dev · Instant Deploy</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align:center;padding:16px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
+            Privacy · Terms · Cookies · Connectify © 2026<br>
+            Powered by HTML, CSS, JS & PHP Backend
+        </div>
+    </aside>
+</div>
+
+<!-- ========== MODAL: CREATE NEW PERSON / PROFILE ========== -->
+<div class="modal-overlay" id="createUserModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>Add New Person to Social Network</h3>
+            <button class="modal-close" onclick="closeModal('createUserModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:13.5px;color:var(--text-secondary);margin-bottom:14px;">
+                Create a new person with a real photo. They will be saved directly into the database and you can immediately chat with them using intelligent AI!
+            </p>
+            <div class="modal-field">
+                <label>Full Name *</label>
+                <input type="text" id="newUserName" placeholder="e.g. Ziad Mansour, Mariam Fathy">
+            </div>
+            <div class="modal-field">
+                <label>Job Title / Headline *</label>
+                <input type="text" id="newUserRole" placeholder="e.g. AI Engineer, Product Designer, Student">
+            </div>
+            <div class="modal-field">
+                <label>Bio / Status</label>
+                <textarea id="newUserBio" rows="2" placeholder="Tell us something about this person..."></textarea>
+            </div>
+            <div class="modal-field">
+                <label>City / Location</label>
+                <input type="text" id="newUserLocation" placeholder="e.g. Cairo, Egypt">
+            </div>
+            <div class="modal-field">
+                <label>Choose Profile Picture Preset</label>
+                <div style="display:flex;gap:10px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;" id="avatarPresets">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic active-preset" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
+                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
+                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
+                    <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
+                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
+                </div>
+                <div style="text-align:center;font-size:12px;color:var(--text-secondary);">Or upload custom photo: <input type="file" id="customUserPicInput" accept="image/*" onchange="handleCustomAvatarUpload(event)"></div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn-post" onclick="submitNewProfileToDatabase()">Save Profile to Database & Start Chatting</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: CREATE POST ========== -->
+<div class="modal-overlay" id="createPostModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>Create Post</h3>
+            <button class="modal-close" onclick="closeModal('createPostModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                <img class="user-pic" id="modalPostAvatar" src="" alt="User">
+                <div>
+                    <strong id="modalPostAuthor">User Name</strong>
+                    <div id="modalFeelingBadge" style="display:none;font-size:12px;color:var(--text-secondary);margin-top:2px;"></div>
+                    <select id="postAudience" style="border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:12px;background:var(--input-bg);color:var(--text);margin-top:3px;">
+                        <option>🌍 Public</option>
+                        <option>👥 Friends</option>
+                        <option>🔒 Only Me</option>
+                    </select>
+                </div>
+            </div>
+            <textarea class="modal-field" id="postContentInput" placeholder="What's on your mind?" style="width:100%;height:130px;border:none;resize:none;font-size:16px;background:transparent;" oninput="togglePostSubmitBtn()"></textarea>
+            
+            <div id="postImagePreviewBox" style="display:none;position:relative;margin-top:10px;border-radius:12px;overflow:hidden;">
+                <img id="postImagePreviewTag" src="" alt="Preview" style="width:100%;max-height:280px;object-fit:cover;">
+                <button onclick="clearPostImage()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:white;width:30px;height:30px;border-radius:50%;font-size:14px;">✕</button>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border-light);border-radius:12px;margin-top:14px;">
+                <span style="font-size:14px;font-weight:700;">Add to your post</span>
+                <div style="display:flex;gap:6px;">
+                    <label class="icon-btn" title="Add Photo" style="cursor:pointer;">
+                        <svg viewBox="0 0 24 24" fill="#10b981"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                        <input type="file" id="postImageFileInput" accept="image/*" onchange="handlePostImageUpload(event)" hidden>
+                    </label>
+                    <button class="icon-btn" title="Add Feeling" onclick="openFeelingModal()">
+                        <svg viewBox="0 0 24 24" fill="#f59e0b"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+                    </button>
+                    <button class="icon-btn" title="Add Emoji" onclick="insertPostEmoji()">
+                        <svg viewBox="0 0 24 24" fill="#ec4899"><circle cx="12" cy="12" r="10" fill="none" stroke="#ec4899" stroke-width="2"/><circle cx="9" cy="10" r="1.5" fill="#ec4899"/><circle cx="15" cy="10" r="1.5" fill="#ec4899"/><path d="M8 14s1.5 3 4 3 4-3 4-3" fill="none" stroke="#ec4899" stroke-width="1.5"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn-post" id="postSubmitBtn" onclick="submitNewPost()" disabled>Post to Feed</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: STORY VIEWER ========== -->
+<div class="modal-overlay" id="storyViewer" style="background:rgba(0,0,0,0.95);padding:0;" onclick="closeStoryViewer()">
+    <div style="width:100%;max-width:440px;height:95vh;position:relative;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:20px;" onclick="event.stopPropagation()">
+        <img id="viewerBgImg" src="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;" alt="Story">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.6) 0%,transparent 30%,rgba(0,0,0,0.7) 100%);z-index:2;"></div>
+        
+        <div style="position:relative;z-index:3;">
+            <div style="width:100%;height:4px;background:rgba(255,255,255,0.4);border-radius:2px;overflow:hidden;margin-bottom:12px;">
+                <div id="storyProgress" style="height:100%;width:0%;background:white;transition:width 0.1s linear;"></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;color:white;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <img id="viewerAvatar" src="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid white;">
+                    <div>
+                        <strong id="viewerAuthor" style="font-size:14.5px;display:block;">User</strong>
+                        <small style="opacity:0.8;font-size:11.5px;">Just now</small>
+                    </div>
+                </div>
+                <button onclick="closeStoryViewer()" style="color:white;font-size:20px;padding:4px;">✕</button>
+            </div>
+        </div>
+
+        <div style="position:relative;z-index:3;color:white;font-size:22px;font-weight:800;text-align:center;padding:20px;text-shadow:0 2px 10px rgba(0,0,0,0.8);" id="viewerText"></div>
+        <div style="position:relative;z-index:3;text-align:center;color:white;opacity:0.75;font-size:12px;">Click to view next story</div>
+    </div>
+</div>
+
+<!-- ========== MODAL: LIVE STREAM STUDIO ========== -->
+<div class="modal-overlay" id="liveModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>🔴 Go Live Studio</h3>
+            <button class="modal-close" onclick="closeLiveModal()">✕</button>
+        </div>
+        <div class="modal-body" style="text-align:center;">
+            <div id="liveStreamScreen" style="width:100%;height:250px;background:#000;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;position:relative;overflow:hidden;">
+                <img id="liveStreamUserPic" src="" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #ef4444;margin-bottom:10px;">
+                <span id="liveStatusText" style="font-size:16px;font-weight:700;">Ready to broadcast live</span>
+                <div id="liveViewerBadge" style="display:none;position:absolute;top:14px;left:14px;background:#ef4444;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:800;letter-spacing:0.5px;">LIVE · <span id="liveViewerCount">184</span> WATCHING</div>
+            </div>
+            <p style="font-size:13.5px;color:var(--text-secondary);margin-top:14px;">Broadcast interactive live audio and video to all followers in your network.</p>
+        </div>
+        <div class="modal-foot">
+            <button class="btn-post" id="btnGoLive" onclick="toggleLiveBroadcast()">Start Live Stream</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: WATCH VIDEOS ========== -->
+<div class="modal-overlay" id="watchModal">
+    <div class="modal-box" style="max-width:620px;">
+        <div class="modal-head">
+            <h3>🎥 Connectify Video Feed</h3>
+            <button class="modal-close" onclick="closeModal('watchModal')">✕</button>
+        </div>
+        <div class="modal-body" style="padding:16px;">
+            <div class="card" style="margin-bottom:16px;">
+                <div style="height:230px;background:url('https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80') center/cover;display:flex;align-items:center;justify-content:center;color:white;font-size:52px;cursor:pointer;position:relative;" onclick="playSimulatedVideo(this, 'Building Full Stack Modern Web Apps')">
+                    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);"></div>
+                    <span style="position:relative;z-index:2;">▶️</span>
+                </div>
+                <div style="padding:14px;">
+                    <strong style="font-size:16px;">Building Scalable Full-Stack Architecture in 2026</strong>
+                    <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Tech Innovations · 410k views · 1 day ago</div>
+                </div>
+            </div>
+            <div class="card">
+                <div style="height:230px;background:url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&auto=format&fit=crop&q=80') center/cover;display:flex;align-items:center;justify-content:center;color:white;font-size:52px;cursor:pointer;position:relative;" onclick="playSimulatedVideo(this, 'CSS Architecture Secrets')">
+                    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);"></div>
+                    <span style="position:relative;z-index:2;">▶️</span>
+                </div>
+                <div style="padding:14px;">
+                    <strong style="font-size:16px;">Modern CSS Grid & Responsive Design Deep Dive</strong>
+                    <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Frontend Masters · 198k views · 4 days ago</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: GROUPS ========== -->
+<div class="modal-overlay" id="groupsModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>👥 Community Groups</h3>
+            <button class="modal-close" onclick="closeModal('groupsModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="popover-item" style="border-radius:10px;">
+                <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;">💻</div>
+                <div class="popover-info">
+                    <strong>Frontend Developers Network</strong>
+                    <span>16,400 members · 45 posts today</span>
+                </div>
+                <button class="btn-post" style="width:auto;padding:6px 14px;font-size:12.5px;" onclick="toggleGroupJoin(this)">Joined</button>
+            </div>
+            <div class="popover-item" style="border-radius:10px;margin-top:8px;">
+                <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;">🎨</div>
+                <div class="popover-info">
+                    <strong>Product & UI/UX Designers</strong>
+                    <span>9,800 members · 28 posts today</span>
+                </div>
+                <button class="btn-post" style="width:auto;padding:6px 14px;font-size:12.5px;background:var(--hover-bg);color:var(--text);" onclick="toggleGroupJoin(this)">Join</button>
+            </div>
+            <div class="popover-item" style="border-radius:10px;margin-top:8px;">
+                <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;">🇪🇬</div>
+                <div class="popover-info">
+                    <strong>Cairo Tech Hub & Meetups</strong>
+                    <span>24,500 members · 120 posts today</span>
+                </div>
+                <button class="btn-post" style="width:auto;padding:6px 14px;font-size:12.5px;" onclick="toggleGroupJoin(this)">Joined</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: SAVED BOOKMARKS ========== -->
+<div class="modal-overlay" id="savedModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>🔖 Saved Bookmarks</h3>
+            <button class="modal-close" onclick="closeModal('savedModal')">✕</button>
+        </div>
+        <div class="modal-body" id="savedPostsList"></div>
+    </div>
+</div>
+
+<!-- ========== MODAL: FRIENDS & MEMBERS ========== -->
+<div class="modal-overlay" id="friendsModal">
+    <div class="modal-box" style="max-width:600px;">
+        <div class="modal-head">
+            <h3>🤝 Community Members</h3>
+            <button class="modal-close" onclick="closeModal('friendsModal')">✕</button>
+        </div>
+        <div class="modal-body" id="friendsModalList"></div>
+    </div>
+</div>
+
+<!-- ========== MODAL: LIGHTBOX VIEWER ========== -->
+<div class="modal-overlay" id="lightboxModal" onclick="closeModal('lightboxModal')">
+    <div style="position:relative;max-width:92%;max-height:92%;">
+        <img id="lightboxImg" src="" style="max-width:100%;max-height:88vh;object-fit:contain;border-radius:10px;box-shadow:var(--shadow-lg);" alt="Full view">
+    </div>
+</div>
+
+<!-- ========== MODAL: FEELING PICKER ========== -->
+<div class="modal-overlay" id="feelingModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>How are you feeling?</h3>
+            <button class="modal-close" onclick="closeModal('feelingModal')">✕</button>
+        </div>
+        <div class="modal-body" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+            <button class="nav-menu-item" onclick="selectFeeling('Happy', '😊')"><span style="font-size:24px;">😊</span> Happy</button>
+            <button class="nav-menu-item" onclick="selectFeeling('Blessed', '🙏')"><span style="font-size:24px;">🙏</span> Blessed</button>
+            <button class="nav-menu-item" onclick="selectFeeling('Loved', '🥰')"><span style="font-size:24px;">🥰</span> In Love</button>
+            <button class="nav-menu-item" onclick="selectFeeling('Excited', '🤩')"><span style="font-size:24px;">🤩</span> Excited</button>
+            <button class="nav-menu-item" onclick="selectFeeling('Coding', '💻')"><span style="font-size:24px;">💻</span> Coding</button>
+            <button class="nav-menu-item" onclick="selectFeeling('Traveling', '✈️')"><span style="font-size:24px;">✈️</span> Traveling</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== FIXED PERSISTENT WEB CALCULATOR (اله حاسبه ثابته) ========== -->
+<div id="fixedCalcWrapper" class="fixed-calc-wrapper">
+    <!-- Floating Launcher Pill -->
+    <button id="calcLauncherBtn" class="calc-launcher-btn" onclick="toggleCalculator()" title="Open Web Calculator (الآلة الحاسبة)">
+        <span class="calc-launcher-icon">🧮</span>
+        <span class="calc-launcher-label">Web Calculator</span>
+    </button>
+
+    <!-- Floating / Docked Calculator Window -->
+    <div id="calculatorWindow" class="calculator-window" style="display:none;">
+        <div class="calc-header">
+            <div class="calc-title">
+                <span>🧮</span>
+                <strong>Web Calculator</strong>
+                <span class="calc-badge">Exam Project</span>
+            </div>
+            <div class="calc-controls">
+                <button class="calc-ctrl-btn" onclick="toggleCalcHistory()" title="Calculation History">📜</button>
+                <button class="calc-ctrl-btn" onclick="toggleCalcScientific()" id="btnCalcSciToggle" title="Scientific Mode">f(x)</button>
+                <button class="calc-ctrl-btn" onclick="minimizeCalculator()" title="Minimize">─</button>
+                <button class="calc-ctrl-btn" onclick="toggleCalculator()" title="Close">✕</button>
+            </div>
+        </div>
+
+        <div class="calc-body">
+            <!-- Display Screen -->
+            <div class="calc-display">
+                <div class="calc-expr" id="calcExpr"></div>
+                <div class="calc-val" id="calcVal">0</div>
+            </div>
+
+            <!-- Scientific Row (collapsible/toggleable) -->
+            <div class="calc-sci-row" id="calcSciRow" style="display:none;">
+                <button class="calc-btn sci" onclick="calcSci('sin')">sin</button>
+                <button class="calc-btn sci" onclick="calcSci('cos')">cos</button>
+                <button class="calc-btn sci" onclick="calcSci('tan')">tan</button>
+                <button class="calc-btn sci" onclick="calcSci('sqrt')">√x</button>
+                <button class="calc-btn sci" onclick="calcSci('sqr')">x²</button>
+                <button class="calc-btn sci" onclick="calcSci('inv')">1/x</button>
+                <button class="calc-btn sci" onclick="calcSci('pi')">π</button>
+                <button class="calc-btn sci" onclick="calcInput('(')">(</button>
+                <button class="calc-btn sci" onclick="calcInput(')')">)</button>
+                <button class="calc-btn sci" onclick="calcInput('%')">%</button>
+            </div>
+
+            <!-- Main Keypad Grid -->
+            <div class="calc-grid">
+                <button class="calc-btn func" onclick="calcClearAll()">C</button>
+                <button class="calc-btn func" onclick="calcClearEntry()">CE</button>
+                <button class="calc-btn func" onclick="calcBackspace()">⌫</button>
+                <button class="calc-btn op" onclick="calcOperator('/')">÷</button>
+
+                <button class="calc-btn num" onclick="calcInput('7')">7</button>
+                <button class="calc-btn num" onclick="calcInput('8')">8</button>
+                <button class="calc-btn num" onclick="calcInput('9')">9</button>
+                <button class="calc-btn op" onclick="calcOperator('*')">×</button>
+
+                <button class="calc-btn num" onclick="calcInput('4')">4</button>
+                <button class="calc-btn num" onclick="calcInput('5')">5</button>
+                <button class="calc-btn num" onclick="calcInput('6')">6</button>
+                <button class="calc-btn op" onclick="calcOperator('-')">−</button>
+
+                <button class="calc-btn num" onclick="calcInput('1')">1</button>
+                <button class="calc-btn num" onclick="calcInput('2')">2</button>
+                <button class="calc-btn num" onclick="calcInput('3')">3</button>
+                <button class="calc-btn op" onclick="calcOperator('+')">+</button>
+
+                <button class="calc-btn func" onclick="calcNegate()">±</button>
+                <button class="calc-btn num" onclick="calcInput('0')">0</button>
+                <button class="calc-btn num" onclick="calcInput('.')">.</button>
+                <button class="calc-btn equals" onclick="calcCalculate()">=</button>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="calc-footer-actions">
+                <button class="calc-action-btn" onclick="copyCalcResult()" title="Copy result to clipboard">📋 Copy</button>
+                <button class="calc-action-btn" onclick="shareCalcToFeed()" title="Share to Feed post">📝 Share</button>
+                <button class="calc-action-btn" onclick="sendCalcToChat()" title="Send to active chat">💬 To Chat</button>
+            </div>
+
+            <!-- History Panel (slides up) -->
+            <div class="calc-history-drawer" id="calcHistoryDrawer" style="display:none;">
+                <div class="calc-hist-head">
+                    <strong style="font-size:12.5px;">Recent Calculations</strong>
+                    <button class="btn-text" onclick="clearCalcHistory()">Clear</button>
+                </div>
+                <div class="calc-hist-list" id="calcHistoryList">
+                    <div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:12px;">No calculations yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== FLOATING REALISTIC AI CHAT DOCK ========== -->
+<div class="chat-dock" id="chatDock"></div>
+
+<!-- ========== TOAST NOTIFICATION ========== -->
+<div class="toast-msg" id="toast"><span id="toastText">Action completed</span></div>
+
+<!-- ========================================================
+     APPLICATION LOGIC: AI CONVERSATION ENGINE, DATA & STATE
+     ======================================================== -->
+<script>
+// Storage Keys
+const POSTS_KEY = 'socialvibe_posts';
+const PROFILE_KEY = 'socialvibe_profile';
+const USERS_KEY = 'socialvibe_users';
+const SAVED_KEY = 'socialvibe_saved';
+const NOTIFS_KEY = 'socialvibe_notifs';
+const THEME_KEY = 'connectify_theme';
+const CHATS_PREFIX = 'connectify_chat_';
+
+// Default Realistic Members with real face profile pictures & personalities
+const DEFAULT_MEMBERS = [
+    {
+        id: "usr_sara",
+        name: "Sara Ahmed",
+        role: "Frontend Engineer @ TechCorp",
+        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+        bio: "Building delightful user interfaces with JavaScript & React 🚀 Coffee enthusiast ☕",
+        location: "Cairo, Egypt",
+        mutual: 14,
+        status: "Active Now",
+        personality: "energetic, tech-savvy frontend engineer who loves clean code, UI design, and always greets warmly with emojis."
+    },
+    {
+        id: "usr_mohamed",
+        name: "Mohamed Ali",
+        role: "Lead Full-Stack Developer",
+        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+        bio: "Tech lead, cloud lover and outdoor hiker 🌄 Always up for an interesting technical discussion.",
+        location: "Alexandria, Egypt",
+        mutual: 9,
+        status: "Active Now",
+        personality: "experienced, calm, helpful tech lead who offers solid advice on software architecture, backend systems and databases."
+    },
+    {
+        id: "usr_layla",
+        name: "Layla Hassan",
+        role: "Senior UI/UX Designer",
+        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        bio: "Obsessed with typography, colors, and accessibility ✨ Making web apps visually stunning.",
+        location: "Cairo, Egypt",
+        mutual: 18,
+        status: "Active Now",
+        personality: "creative, encouraging designer who loves discussing user experience, color palettes, animations, and design trends."
+    },
+    {
+        id: "usr_ahmed",
+        name: "Ahmed Nasser",
+        role: "Computer Science Graduate",
+        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+        bio: "Enrolled in Masters at Cairo University 🎓 Learning AI and distributed systems.",
+        location: "Giza, Egypt",
+        mutual: 6,
+        status: "Active Now",
+        personality: "ambitious, polite student eager to discuss universities, research, algorithms, and career growth in tech."
+    },
+    {
+        id: "usr_nour",
+        name: "Nour Elsayed",
+        role: "Product Manager",
+        avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+        bio: "Connecting user needs with technical execution 📊 Coffee and books.",
+        location: "Cairo, Egypt",
+        mutual: 21,
+        status: "Active Now",
+        personality: "organized, friendly product leader with practical insights on project management and team dynamics."
+    },
+    {
+        id: "usr_rana",
+        name: "Rana Mohamed",
+        role: "Mobile App Developer",
+        avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80",
+        bio: "Flutter & React Native explorer 📱 Crafting smooth mobile experiences.",
+        location: "Mansoura, Egypt",
+        mutual: 8,
+        status: "Active 5m ago",
+        personality: "enthusiastic mobile developer who talks about cross-platform apps and device performance."
+    },
+    {
+        id: "usr_omar",
+        name: "Omar Khaled",
+        role: "DevOps & Cloud Engineer",
+        avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80",
+        bio: "Docker, Kubernetes and CI/CD pipelines 🐳 Keeping servers running 99.99% uptime.",
+        location: "Cairo, Egypt",
+        mutual: 12,
+        status: "Active Now",
+        personality: "pragmatic cloud engineer who loves automation, containerization, and server monitoring."
+    },
+    {
+        id: "usr_youssef",
+        name: "Youssef Ibrahim",
+        role: "Cybersecurity Specialist",
+        avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
+        bio: "Penetration testing & ethical hacking 🛡️ Security first always.",
+        location: "Alexandria, Egypt",
+        mutual: 7,
+        status: "Active 10m ago",
+        personality: "sharp, security-conscious expert who enjoys sharing tips on privacy and digital safety."
+    }
+];
+
+// Current User Profile
+const DEFAULT_ME = {
+    name: "User Name",
+    bio: "Full-Stack Web Developer & Designer 🚀",
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    work: "Tech Solutions Inc.",
+    education: "Cairo University",
+    location: "Cairo, Egypt",
+    relationship: "Single"
+};
+
+// Default Feed Posts
+const INITIAL_POSTS = [
+    {
+        id: 1,
+        authorId: "usr_sara",
+        author: "Sara Ahmed",
+        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+        time: "2 hours ago",
+        text: "Just deployed my first full-stack web application! 🚀 Months of practicing JavaScript, CSS architectures, and backend databases have finally come together.\n\nTo everyone on their coding journey: consistency beats intensity every single time. Keep building! 💪\n\n#WebDevelopment #JavaScript #Coding",
+        image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&auto=format&fit=crop&q=80",
+        likes: 184, liked: false, reaction: 'like',
+        comments: [
+            { id: 101, author: "Mohamed Ali", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", text: "Incredible milestone Sara! 🎉 Super clean UI too!", time: "1h", liked: false },
+            { id: 102, author: "Layla Hassan", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", text: "So proud of you! Keep leveling up 🔥", time: "45m", liked: false }
+        ],
+        shares: 28, showComments: false
+    },
+    {
+        id: 2,
+        authorId: "usr_mohamed",
+        author: "Mohamed Ali",
+        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+        time: "5 hours ago",
+        text: "Taking a breather by the coast after an intense sprint 🌅\n\nRemember to step away from the monitors once in a while. Mental clarity is the secret weapon of great engineering.\n\n#Nature #WeekendVibes #Relax",
+        image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80",
+        likes: 312, liked: false, reaction: 'like',
+        comments: [
+            { id: 201, author: "Sara Ahmed", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80", text: "Stunning view Mohamed! Alexandria sunset is unbeatable 😍", time: "4h", liked: false }
+        ],
+        shares: 42, showComments: false
+    },
+    {
+        id: 3,
+        authorId: "usr_layla",
+        author: "Layla Hassan",
+        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        time: "Yesterday",
+        text: "📚 Quick UI Design rule of thumb:\n\n1. Contrast determines readability\n2. Whitespace is your breathing room\n3. Colors should guide attention, not overwhelm it\n\nDesigning with purpose makes software feel effortless. What's your top frontend tip?\n\n#FullStack #WebDevelopment #UIUX",
+        image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80",
+        likes: 489, liked: false, reaction: 'like',
+        comments: [
+            { id: 301, author: "Ahmed Nasser", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80", text: "Spot on Layla! Bookmarked for reference 👏", time: "20h", liked: false }
+        ],
+        shares: 95, showComments: false
+    }
+];
+
+// Initial Dynamic Notifications
+const INITIAL_NOTIFICATIONS = [
+    { id: 1, type: "like", userId: "usr_sara", userName: "Sara Ahmed", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80", text: "reacted ❤️ to your post", time: "20m ago", read: false, postId: 1 },
+    { id: 2, type: "msg", userId: "usr_mohamed", userName: "Mohamed Ali", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", text: "sent you a new message: 'Hey! Free for a quick tech chat?'", time: "1h ago", read: false },
+    { id: 3, type: "comment", userId: "usr_layla", userName: "Layla Hassan", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", text: "commented on your photo: 'Looks amazing!'", time: "3h ago", read: false, postId: 2 },
+    { id: 4, type: "group", userId: "usr_ahmed", userName: "Ahmed Nasser", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80", text: "invited you to join 'Frontend Developers Network'", time: "1d ago", read: true }
+];
+
+// Helper Data Methods
+function getAllMembers() {
+    try {
+        const stored = localStorage.getItem(USERS_KEY);
+        if (stored) return JSON.parse(stored);
+    } catch(e) {}
+    localStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_MEMBERS));
+    return DEFAULT_MEMBERS;
+}
+function saveAllMembers(members) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(members));
+}
+
+function getPosts() {
+    try {
+        const s = localStorage.getItem(POSTS_KEY);
+        if (s) return JSON.parse(s);
+    } catch(e) {}
+    localStorage.setItem(POSTS_KEY, JSON.stringify(INITIAL_POSTS));
+    return INITIAL_POSTS;
+}
+function savePosts(p) { localStorage.setItem(POSTS_KEY, JSON.stringify(p)); }
+
+function getProfile() {
+    try {
+        const s = localStorage.getItem(PROFILE_KEY);
+        if (s) return JSON.parse(s);
+    } catch(e) {}
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(DEFAULT_ME));
+    return DEFAULT_ME;
+}
+
+function getNotifications() {
+    try {
+        const s = localStorage.getItem(NOTIFS_KEY);
+        if (s) return JSON.parse(s);
+    } catch(e) {}
+    localStorage.setItem(NOTIFS_KEY, JSON.stringify(INITIAL_NOTIFICATIONS));
+    return INITIAL_NOTIFICATIONS;
+}
+function saveNotifications(n) { localStorage.setItem(NOTIFS_KEY, JSON.stringify(n)); }
+
+function getSaved() {
+    try {
+        const s = localStorage.getItem(SAVED_KEY);
+        if (s) return JSON.parse(s);
+    } catch(e) {}
+    return [];
+}
+function saveSaved(s) { localStorage.setItem(SAVED_KEY, JSON.stringify(s)); }
+
+// ==================== THEME MANAGEMENT ====================
+function initTheme() {
+    const cur = localStorage.getItem(THEME_KEY) || 'light';
+    applyTheme(cur);
+}
+
+function applyTheme(theme) {
+    const isDark = theme === 'dark';
+    document.body.classList.toggle('dark-mode', isDark);
+    localStorage.setItem(THEME_KEY, theme);
+
+    const icon = document.getElementById('themeIcon');
+    const menuTxt = document.getElementById('menuThemeText');
+    if (icon) {
+        if (isDark) {
+            icon.innerHTML = '<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 000-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>';
+            if (menuTxt) menuTxt.textContent = "Switch to Light Mode";
+        } else {
+            icon.innerHTML = '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>';
+            if (menuTxt) menuTxt.textContent = "Switch to Dark Mode";
+        }
+    }
+}
+
+function toggleDarkMode() {
+    const isDark = document.body.classList.contains('dark-mode');
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+    toast(`Switched to ${newTheme === 'dark' ? 'Dark' : 'White'} Mode 🌓`);
+    closeAllPopovers();
+}
+
+// ==================== INITIALIZATION ====================
+let currentTagFilter = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    updateProfileUI();
+    renderStories();
+    renderFeed();
+    renderContacts();
+    renderNotificationsPopover();
+    renderMessagesPopover();
+    updateBadges();
+    initCalc();
+
+    // Close on outer click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.nav-right') && !e.target.closest('.popover')) {
+            closeAllPopovers();
+        }
+        if (!e.target.closest('.post-menu-trigger') && !e.target.closest('.post-dropdown')) {
+            document.querySelectorAll('.post-dropdown').forEach(d => d.classList.remove('open'));
+        }
+        if (!e.target.closest('.post-action') && !e.target.closest('.reactions-box')) {
+            document.querySelectorAll('.reactions-box').forEach(r => r.classList.remove('show'));
+        }
+    });
+});
+
+function updateProfileUI() {
+    const p = getProfile();
+    const myPosts = getPosts().filter(x => x.author === p.name || x.isOwn);
+    const members = getAllMembers();
+
+    ['navAvatarPic', 'sideAvatarPic', 'feedAvatarPic', 'modalPostAvatar', 'menuUserPic', 'liveStreamUserPic'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.src = p.avatar;
+    });
+
+    const sideName = document.getElementById('sideName');
+    if (sideName) sideName.textContent = p.name;
+    const sideBio = document.getElementById('sideBio');
+    if (sideBio) sideBio.textContent = p.bio || 'Welcome to Connectify!';
+    const modalAuthor = document.getElementById('modalPostAuthor');
+    if (modalAuthor) modalAuthor.textContent = p.name;
+    const menuName = document.getElementById('menuName');
+    if (menuName) menuName.textContent = p.name;
+    const postCount = document.getElementById('sidePostCount');
+    if (postCount) postCount.textContent = myPosts.length;
+    const friendsCount = document.getElementById('sideFriendsCount');
+    if (friendsCount) friendsCount.textContent = members.length;
+    const badge = document.getElementById('memberCountBadge');
+    if (badge) badge.textContent = members.length;
+}
+
+function updateBadges() {
+    const notifs = getNotifications();
+    const unreadNotifs = notifs.filter(n => !n.read).length;
+    const notifBadge = document.getElementById('notifBadge');
+    if (notifBadge) {
+        notifBadge.textContent = unreadNotifs;
+        notifBadge.style.display = unreadNotifs > 0 ? 'flex' : 'none';
+    }
+
+    const saved = getSaved();
+    const savedBadge = document.getElementById('savedCountBadge');
+    if (savedBadge) savedBadge.textContent = saved.length;
+}
+
+// ==================== CONTACTS & AI CHAT ====================
+function renderContacts() {
+    const members = getAllMembers();
+    const container = document.getElementById('contactsList');
+    const countEl = document.getElementById('contactsCount');
+    if (countEl) countEl.textContent = members.length;
+
+    if (!container) return;
+    container.innerHTML = members.map(m => `
+        <div class="online-item" onclick="openChat('${m.id}')">
+            <div class="online-avatar-wrap">
+                <img class="online-avatar" src="${m.avatar}" alt="${escapeHtml(m.name)}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'">
+                <div class="online-dot"></div>
+            </div>
+            <div class="online-info">
+                <strong>${escapeHtml(m.name)}</strong>
+                <small>${escapeHtml(m.role || 'Member')}</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Multi-Turn Context-Aware AI Chat Engine
+const activeChats = {};
+
+function openChat(userId) {
+    closeAllPopovers();
+    const members = getAllMembers();
+    const member = members.find(m => m.id === userId) || members[0];
+    if (!member) return;
+
+    if (activeChats[member.id]) {
+        const inp = document.getElementById(`chatInp-${member.id}`);
+        if (inp) inp.focus();
+        return;
+    }
+
+    activeChats[member.id] = true;
+    const dock = document.getElementById('chatDock');
+
+    // Retrieve previous chat history
+    let history = [];
+    try {
+        const stored = localStorage.getItem(CHATS_PREFIX + member.id);
+        if (stored) history = JSON.parse(stored);
+    } catch(e) {}
+
+    if (history.length === 0) {
+        history = [
+            { from: 'them', text: `Hey there! How's your day going? Great to connect with you! 👋` }
+        ];
+        localStorage.setItem(CHATS_PREFIX + member.id, JSON.stringify(history));
+    }
+
+    const chatDiv = document.createElement('div');
+    chatDiv.className = 'chat-window';
+    chatDiv.id = `chatBox-${member.id}`;
+    chatDiv.innerHTML = `
+        <div class="chat-header">
+            <div class="chat-user">
+                <img class="chat-user-pic" src="${member.avatar}" alt="${escapeHtml(member.name)}">
+                <div>
+                    <strong>${escapeHtml(member.name)}</strong>
+                    <small>Active Now</small>
+                </div>
+            </div>
+            <div class="chat-controls">
+                <button onclick="closeChat('${member.id}')" title="Close">✕</button>
+            </div>
+        </div>
+        <div class="chat-messages" id="msgs-${member.id}">
+            ${history.map(msg => `
+                <div class="msg ${msg.from === 'me' ? 'msg-me' : 'msg-them'}">${escapeHtml(msg.text)}</div>
+            `).join('')}
+            <div class="typing-bubble" id="typing-${member.id}">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+        <div class="chat-input-bar">
+            <input type="text" id="chatInp-${member.id}" placeholder="Message ${escapeHtml(member.name.split(' ')[0])}..." onkeydown="if(event.key==='Enter') sendChatMessage('${member.id}')">
+            <button class="send-btn" style="width:30px;height:30px;" onclick="sendChatMessage('${member.id}')">
+                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
+    `;
+
+    dock.appendChild(chatDiv);
+    const msgsContainer = document.getElementById(`msgs-${member.id}`);
+    msgsContainer.scrollTop = msgsContainer.scrollHeight;
+    setTimeout(() => {
+        const inp = document.getElementById(`chatInp-${member.id}`);
+        if (inp) inp.focus();
+    }, 100);
+}
+
+function sendChatMessage(userId) {
+    const inp = document.getElementById(`chatInp-${userId}`);
+    if (!inp) return;
+    const text = inp.value.trim();
+    if (!text) return;
+
+    const members = getAllMembers();
+    const member = members.find(m => m.id === userId);
+    if (!member) return;
+
+    const msgsContainer = document.getElementById(`msgs-${userId}`);
+    const typingBubble = document.getElementById(`typing-${userId}`);
+
+    // Append user message
+    const myMsg = document.createElement('div');
+    myMsg.className = 'msg msg-me';
+    myMsg.textContent = text;
+    msgsContainer.insertBefore(myMsg, typingBubble);
+    inp.value = '';
+    msgsContainer.scrollTop = msgsContainer.scrollHeight;
+
+    // Save to history
+    let history = [];
+    try {
+        history = JSON.parse(localStorage.getItem(CHATS_PREFIX + userId)) || [];
+    } catch(e) {}
+    history.push({ from: 'me', text: text });
+    localStorage.setItem(CHATS_PREFIX + userId, JSON.stringify(history));
+
+    // Show AI typing indicator
+    typingBubble.style.display = 'flex';
+    msgsContainer.scrollTop = msgsContainer.scrollHeight;
+
+    // Generate intelligent personality-driven AI reply
+    const replyDelay = Math.min(2200, Math.max(900, text.length * 40));
+    setTimeout(() => {
+        typingBubble.style.display = 'none';
+        const replyText = generateAIReply(member, text, history);
+
+        const themMsg = document.createElement('div');
+        themMsg.className = 'msg msg-them';
+        themMsg.textContent = replyText;
+        msgsContainer.insertBefore(themMsg, typingBubble);
+        msgsContainer.scrollTop = msgsContainer.scrollHeight;
+
+        history.push({ from: 'them', text: replyText });
+        localStorage.setItem(CHATS_PREFIX + userId, JSON.stringify(history));
+    }, replyDelay);
+}
+
+function closeChat(userId) {
+    delete activeChats[userId];
+    const el = document.getElementById(`chatBox-${userId}`);
+    if (el) el.remove();
+}
+
+// Realistic Conversational AI Engine
+function generateAIReply(person, userMessage, conversationHistory) {
+    const q = userMessage.toLowerCase().trim();
+    const firstName = person.name.split(' ')[0];
+
+    // Greetings
+    if (q.includes('hello') || q.includes('hi') || q.includes('hey') || q.includes('salam') || q.includes('good morning') || q.includes('good evening')) {
+        const greetings = [
+            `Hey! Awesome to hear from you! How's your project coming along today? 😊`,
+            `Hi there! Great timing, I was just checking the latest updates on Connectify. How are you doing?`,
+            `Hey! 👋 Hope you're having an awesome week! What are you working on right now?`
+        ];
+        return greetings[Math.floor(Math.random() * greetings.length)];
+    }
+
+    // Role / Job specific responses
+    if (q.includes('what do you do') || q.includes('your job') || q.includes('your role') || q.includes('who are you')) {
+        return `I'm ${person.name}, working as ${person.role || 'a tech professional'}. Basically ${person.bio || 'building cool web apps'}! What about you?`;
+    }
+
+    // Coding / Web dev questions
+    if (q.includes('code') || q.includes('programming') || q.includes('javascript') || q.includes('css') || q.includes('react') || q.includes('html') || q.includes('python')) {
+        if (person.name.includes('Sara') || person.role.toLowerCase().includes('frontend')) {
+            return `Oh I love discussing frontend! Modern CSS and vanilla JS have become so powerful recently. Are you building a full-stack project or focusing on UI animations? 💻✨`;
+        } else if (person.name.includes('Mohamed') || person.role.toLowerCase().includes('full-stack')) {
+            return `From an architectural standpoint, keeping your components clean and state manageable is key. What tech stack are you running on your end?`;
+        } else {
+            return `Coding is so rewarding once everything clicks! What kind of features are you currently implementing?`;
+        }
+    }
+
+    // Design / UI questions
+    if (q.includes('design') || q.includes('ui') || q.includes('ux') || q.includes('look') || q.includes('color') || q.includes('font')) {
+        return `Good design is all about clarity and frictionless experience. I always tell people: if a user has to think about where to click, the layout needs simplifying! What's your take? 🎨`;
+    }
+
+    // General questions / How are you
+    if (q.includes('how are you') || q.includes('how r u') || q.includes('whats up') || q.includes("what's up")) {
+        return `Doing really well, thanks for asking! Just reviewing some code and sipping coffee ☕ How's everything on your side?`;
+    }
+
+    // Compliments / Positive feedback
+    if (q.includes('awesome') || q.includes('great') || q.includes('cool') || q.includes('nice') || q.includes('amazing') || q.includes('good')) {
+        return `Thank you so much! Really appreciate your kind words 🙌 Let's definitely collaborate on future ideas here on Connectify.`;
+    }
+
+    // Help / Questions
+    if (q.includes('help') || q.includes('question') || q.includes('advice') || q.includes('how to')) {
+        return `I'd be glad to help out! Tell me a bit more about what you're trying to achieve and we'll figure it out together.`;
+    }
+
+    // Default conversational fallbacks with personality
+    const fallbacks = [
+        `That's super interesting! Tell me more about that 🙌`,
+        `Totally agree with you on that point. It's really cool having these conversations here on Connectify!`,
+        `Haha, that's spot on! By the way, have you checked out the new posts in the feed today? 🚀`,
+        `I hear you! It's always great bouncing thoughts off each other. What's your main goal for this week?`
+    ];
+    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+}
+
+// ==================== REAL-TIME PROFILE CREATION (DATABASE & LOCAL) ====================
+let selectedPresetAvatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
+
+function openCreateUserModal() {
+    closeAllPopovers();
+    document.getElementById('newUserName').value = '';
+    document.getElementById('newUserRole').value = '';
+    document.getElementById('newUserBio').value = '';
+    document.getElementById('newUserLocation').value = '';
+    openModal('createUserModal');
+}
+
+function selectPresetAvatar(imgEl) {
+    document.querySelectorAll('.preset-pic').forEach(el => el.style.border = 'none');
+    imgEl.style.border = '3px solid var(--primary)';
+    selectedPresetAvatarUrl = imgEl.src;
+}
+
+function handleCustomAvatarUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        selectedPresetAvatarUrl = ev.target.result;
+        toast('Custom avatar selected! 📸');
+    };
+    reader.readAsDataURL(file);
+}
+
+function submitNewProfileToDatabase() {
+    const name = document.getElementById('newUserName').value.trim();
+    const role = document.getElementById('newUserRole').value.trim();
+    const bio = document.getElementById('newUserBio').value.trim();
+    const location = document.getElementById('newUserLocation').value.trim() || 'Cairo, Egypt';
+
+    if (!name || !role) {
+        toast('Please enter both Name and Role! ✍️');
+        return;
+    }
+
+    const newId = 'usr_' + Date.now();
+    const newPerson = {
+        id: newId,
+        name: name,
+        role: role,
+        avatar: selectedPresetAvatarUrl,
+        bio: bio || `Passionate about ${role} and building great software.`,
+        location: location,
+        mutual: 1,
+        status: "Active Now",
+        personality: `enthusiastic ${role} who loves connecting and collaborating with developers.`
+    };
+
+    // 1. Save to localStorage immediately
+    const members = getAllMembers();
+    members.unshift(newPerson);
+    saveAllMembers(members);
+
+    // 2. Also send asynchronous POST to PHP backend (without blocking UI or requiring reload)
+    try {
+        fetch('php/profile.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                display_name: name,
+                work: role,
+                bio: bio,
+                location: location,
+                avatar: selectedPresetAvatarUrl
+            })
+        }).catch(() => {});
+    } catch(e) {}
+
+    closeModal('createUserModal');
+
+    // 3. Update all UI components immediately without page reload!
+    renderContacts();
+    updateProfileUI();
+
+    // 4. Send a notification that a new person joined
+    const notifs = getNotifications();
+    notifs.unshift({
+        id: Date.now(),
+        type: "new_member",
+        userId: newId,
+        userName: name,
+        avatar: selectedPresetAvatarUrl,
+        text: `joined Connectify! Click to say hi 👋`,
+        time: "Just now",
+        read: false
+    });
+    saveNotifications(notifs);
+    renderNotificationsPopover();
+    updateBadges();
+
+    // 5. Open AI chat with the new person immediately
+    toast(`🎉 ${name} profile saved to database! Opening chat...`);
+    setTimeout(() => {
+        openChat(newId);
+    }, 600);
+}
+
+// ==================== NOTIFICATIONS & MESSAGES POPOVERS ====================
+function renderNotificationsPopover() {
+    const notifs = getNotifications();
+    const list = document.getElementById('notifList');
+    if (!list) return;
+
+    if (notifs.length === 0) {
+        list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-secondary);font-size:14px;">No notifications right now</div>`;
+        return;
+    }
+
+    list.innerHTML = notifs.map(n => `
+        <div class="popover-item ${n.read ? '' : 'unread'}" onclick="handleNotificationClick(${n.id}, '${n.userId}', ${n.postId || 'null'})">
+            <img class="popover-avatar" src="${n.avatar}" alt="${escapeHtml(n.userName)}">
+            <div class="popover-info">
+                <strong>${escapeHtml(n.userName)}</strong>
+                <span>${escapeHtml(n.text)} · ${n.time}</span>
+            </div>
+            ${n.read ? '' : '<div class="unread-dot"></div>'}
+        </div>
+    `).join('');
+}
+
+function handleNotificationClick(notifId, userId, postId) {
+    const notifs = getNotifications();
+    const n = notifs.find(x => x.id === notifId);
+    if (n) {
+        n.read = true;
+        saveNotifications(notifs);
+        renderNotificationsPopover();
+        updateBadges();
+    }
+
+    closeAllPopovers();
+
+    if (postId) {
+        const targetEl = document.getElementById(`post-${postId}`);
+        if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetEl.style.transition = 'box-shadow 0.4s';
+            targetEl.style.boxShadow = '0 0 0 3px var(--primary)';
+            setTimeout(() => targetEl.style.boxShadow = '', 2000);
+            return;
+        }
+    }
+
+    if (userId) {
+        openChat(userId);
+    }
+}
+
+function markAllNotificationsRead() {
+    const notifs = getNotifications();
+    notifs.forEach(n => n.read = true);
+    saveNotifications(notifs);
+    renderNotificationsPopover();
+    updateBadges();
+    toast('All notifications marked as read! ✔️');
+}
+
+function renderMessagesPopover() {
+    const members = getAllMembers();
+    const list = document.getElementById('messagesList');
+    if (!list) return;
+
+    list.innerHTML = members.slice(0, 5).map(m => {
+        let lastMsg = "Hey! How are you doing today? 👋";
+        try {
+            const h = JSON.parse(localStorage.getItem(CHATS_PREFIX + m.id));
+            if (h && h.length > 0) lastMsg = h[h.length - 1].text;
+        } catch(e) {}
+
+        return `
+            <div class="popover-item" onclick="openChat('${m.id}')">
+                <img class="popover-avatar" src="${m.avatar}" alt="${escapeHtml(m.name)}">
+                <div class="popover-info">
+                    <strong>${escapeHtml(m.name)}</strong>
+                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px;">${escapeHtml(lastMsg)}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== STORIES ====================
+function renderStories() {
+    const members = getAllMembers();
+    const row = document.getElementById('storiesRow');
+    if (!row) return;
+
+    const myProfile = getProfile();
+
+    const createBtnHTML = `
+        <div class="story story-create" onclick="openCreateModal()">
+            <img class="story-img" src="${myProfile.avatar}" alt="Your story">
+            <div class="story-plus">
+                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            </div>
+            <div class="story-overlay">
+                <div></div>
+                <span>Create Story</span>
+            </div>
+        </div>
+    `;
+
+    const storiesBackgrounds = [
+        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1581291518655-9523c93269c3?w=400&auto=format&fit=crop&q=80"
+    ];
+
+    const storiesHTML = members.slice(0, 5).map((m, idx) => `
+        <div class="story" onclick="openStoryViewer('${m.id}', '${storiesBackgrounds[idx]}')">
+            <img class="story-img" src="${storiesBackgrounds[idx]}" alt="Story">
+            <div class="story-overlay">
+                <div class="story-avatar-wrap">
+                    <img class="story-avatar" src="${m.avatar}" alt="${escapeHtml(m.name)}">
+                </div>
+                <span>${escapeHtml(m.name)}</span>
+            </div>
+        </div>
+    `).join('');
+
+    row.innerHTML = createBtnHTML + storiesHTML;
+}
+
+let storyTimer = null;
+function openStoryViewer(userId, bgImg) {
+    const members = getAllMembers();
+    const m = members.find(x => x.id === userId) || members[0];
+    const viewer = document.getElementById('storyViewer');
+    document.getElementById('viewerBgImg').src = bgImg;
+    document.getElementById('viewerAvatar').src = m.avatar;
+    document.getElementById('viewerAuthor').textContent = m.name;
+    document.getElementById('viewerText').textContent = m.bio || "Sharing moments on Connectify 🌟";
+
+    const prog = document.getElementById('storyProgress');
+    prog.style.width = '0%';
+    viewer.classList.add('active');
+
+    if (storyTimer) clearInterval(storyTimer);
+    let p = 0;
+    storyTimer = setInterval(() => {
+        p += 2;
+        prog.style.width = p + '%';
+        if (p >= 100) {
+            clearInterval(storyTimer);
+            closeStoryViewer();
+        }
+    }, 80);
+}
+
+function closeStoryViewer() {
+    if (storyTimer) clearInterval(storyTimer);
+    document.getElementById('storyViewer').classList.remove('active');
+}
+
+// ==================== FEED & POST RENDERING ====================
+function renderFeed(overridePosts) {
+    let posts = overridePosts || getPosts();
+
+    if (currentTagFilter) {
+        posts = posts.filter(p => p.text && p.text.toLowerCase().includes(currentTagFilter.toLowerCase()));
+        document.getElementById('filterBanner').style.display = 'flex';
+        document.getElementById('filterTagName').textContent = currentTagFilter;
+    } else {
+        document.getElementById('filterBanner').style.display = 'none';
+    }
+
+    const container = document.getElementById('postsFeed');
+    if (!container) return;
+
+    if (!posts.length) {
+        container.innerHTML = `
+            <div class="card" style="padding:48px 20px;text-align:center;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="var(--border)" style="margin-bottom:12px;"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                <h3>No posts found</h3>
+                <p style="color:var(--text-secondary);font-size:14px;margin-top:4px;">Try searching for another topic or share something!</p>
+            </div>
+        `;
+        return;
+    }
+
+    const savedList = getSaved();
+    container.innerHTML = posts.map(p => renderSinglePost(p, savedList.includes(p.id))).join('');
+}
+
+function renderSinglePost(p, isSaved) {
+    const comments = p.comments || [];
+    const commentsHTML = comments.map(c => `
+        <div class="comment-item">
+            <img class="comment-avatar" src="${c.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}" alt="${escapeHtml(c.author)}">
+            <div style="flex:1;">
+                <div class="comment-bubble">
+                    <strong>${escapeHtml(c.author)}</strong>
+                    <p>${escapeHtml(c.text)}</p>
+                </div>
+                <div class="comment-meta">
+                    <span class="${c.liked ? 'c-liked' : ''}" onclick="toggleCommentLike(${p.id}, ${c.id})">Like</span>
+                    <span onclick="replyToComment(${p.id}, '${escapeHtml(c.author)}')">Reply</span>
+                    <span>${c.time || 'now'}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    const isLiked = p.liked;
+    let reactText = 'Like';
+    let reactClass = '';
+    if (p.reaction === 'love') { reactText = 'Love ❤️'; reactClass = 'liked-love'; }
+    else if (isLiked) { reactText = 'Liked 👍'; reactClass = 'liked'; }
+
+    const me = getProfile();
+    const isMe = p.isOwn || (p.author && me.name && p.author.toLowerCase() === me.name.toLowerCase());
+    const authorClick = isMe ? "location.href='profile.html'" : `openChat('${p.authorId || ''}')`;
+    const authorTitle = isMe ? "View My Profile Page" : `Chat with ${escapeHtml(p.author)}`;
+
+    return `
+    <div class="card post" id="post-${p.id}">
+        <div class="post-header">
+            <img class="post-avatar" src="${p.avatar}" alt="${escapeHtml(p.author)}" onclick="${authorClick}" title="${authorTitle}">
+            <div class="post-info">
+                <div class="post-author" onclick="${authorClick}" title="${authorTitle}">
+                    <span>${escapeHtml(p.author)}</span>
+                    <svg class="verified-badge" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </div>
+                <div class="post-meta">
+                    <span>${p.time || 'Just now'}</span> · 🌍 Public
+                </div>
+            </div>
+            <div class="post-menu-wrap" style="position:relative;">
+                <button class="post-menu-trigger" onclick="togglePostDropdown(event, ${p.id})" title="Post options">
+                    <svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                </button>
+                <div class="post-dropdown" id="dropdown-${p.id}">
+                    <button onclick="event.stopPropagation(); toggleSavePost(${p.id})">
+                        <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+                        ${isSaved ? 'Remove from Saved' : 'Save Bookmark'}
+                    </button>
+                    <button onclick="event.stopPropagation(); ${authorClick}">
+                        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                        ${isMe ? 'View My Profile' : 'Message Author'}
+                    </button>
+                    <button onclick="event.stopPropagation(); copyPostLink(${p.id})">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                        Copy Link
+                    </button>
+                    <button class="text-red" onclick="event.stopPropagation(); deletePost(${p.id})">
+                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        Delete Post
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="post-text">${escapeHtml(p.text || '')}</div>
+
+        ${p.image ? `<div class="post-image-wrap" onclick="openLightbox('${p.image}')"><img src="${p.image}" alt="Post image"></div>` : ''}
+
+        <div class="post-stats">
+            <div class="post-stats-left" onclick="togglePostLike(${p.id})">
+                <div class="like-emoji">
+                    <span class="like-emoji-icon" style="background:#2563eb;color:white;">👍</span>
+                    <span class="like-emoji-icon" style="background:#ef4444;color:white;">❤️</span>
+                </div>
+                <span>${p.likes || 0}</span>
+            </div>
+            <div class="post-stats-right">
+                <span onclick="togglePostComments(${p.id})">${comments.length} comments</span> ·
+                <span onclick="sharePost(${p.id})">${p.shares || 0} shares</span>
+            </div>
+        </div>
+
+        <div class="post-action-bar">
+            <!-- Floating Reactions Bar -->
+            <div class="reactions-box" id="reactBox-${p.id}">
+                <span class="react-btn" onclick="selectReaction(${p.id}, 'like', '👍 Like')">👍</span>
+                <span class="react-btn" onclick="selectReaction(${p.id}, 'love', '❤️ Love')">❤️</span>
+                <span class="react-btn" onclick="selectReaction(${p.id}, 'haha', '😂 Haha')">😂</span>
+                <span class="react-btn" onclick="selectReaction(${p.id}, 'wow', '😮 Wow')">😮</span>
+                <span class="react-btn" onclick="selectReaction(${p.id}, 'sad', '😢 Sad')">😢</span>
+                <span class="react-btn" onclick="selectReaction(${p.id}, 'angry', '😡 Angry')">😡</span>
+            </div>
+
+            <button class="post-action ${reactClass}" 
+                onclick="togglePostLike(${p.id})"
+                oncontextmenu="event.preventDefault(); showReactionsBox(${p.id});">
+                <svg viewBox="0 0 24 24"><path d="M14 9V3.5a2.5 2.5 0 00-5 0V9H4a2 2 0 00-2 2v.5l2 8A2 2 0 006 21h9a2 2 0 002-2V11a2 2 0 00-2-2h-1z"/></svg>
+                <span>${reactText}</span>
+            </button>
+            <button class="post-action" onclick="togglePostComments(${p.id})">
+                <svg viewBox="0 0 24 24"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>
+                <span>Comment</span>
+            </button>
+            <button class="post-action" onclick="sharePost(${p.id})">
+                <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                <span>Share</span>
+            </button>
+        </div>
+
+        <div class="comments-area ${p.showComments ? 'open' : ''}" id="comments-${p.id}">
+            ${commentsHTML}
+            <div class="comment-input-row">
+                <img class="comment-avatar" src="${getProfile().avatar}" alt="You">
+                <input type="text" id="commentInp-${p.id}" placeholder="Write a public comment..." onkeydown="if(event.key==='Enter') submitComment(${p.id})">
+                <button class="send-btn" onclick="submitComment(${p.id})" title="Send">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    `;
+}
+
+// Post Actions
+function togglePostLike(id) {
+    const posts = getPosts();
+    const p = posts.find(x => x.id === id);
+    if (!p) return;
+
+    p.liked = !p.liked;
+    if (p.liked) {
+        p.likes = (p.likes || 0) + 1;
+        p.reaction = 'like';
+        toast('Post liked! 👍');
+    } else {
+        p.likes = Math.max(0, (p.likes || 1) - 1);
+        p.reaction = null;
+    }
+    savePosts(posts);
+    renderFeed();
+}
+
+function showReactionsBox(id) {
+    document.querySelectorAll('.reactions-box').forEach(r => r.classList.remove('show'));
+    const box = document.getElementById(`reactBox-${id}`);
+    if (box) box.classList.add('show');
+}
+
+function selectReaction(id, type, label) {
+    const posts = getPosts();
+    const p = posts.find(x => x.id === id);
+    if (!p) return;
+    if (!p.liked) p.likes = (p.likes || 0) + 1;
+    p.liked = true;
+    p.reaction = type;
+    savePosts(posts);
+    renderFeed();
+    toast(`Reacted with ${label}!`);
+}
+
+function togglePostComments(id) {
+    const posts = getPosts();
+    const p = posts.find(x => x.id === id);
+    if (!p) return;
+    p.showComments = !p.showComments;
+    savePosts(posts);
+    renderFeed();
+    if (p.showComments) {
+        setTimeout(() => {
+            const inp = document.getElementById(`commentInp-${id}`);
+            if (inp) inp.focus();
+        }, 100);
+    }
+}
+
+function submitComment(postId) {
+    const inp = document.getElementById(`commentInp-${postId}`);
+    if (!inp) return;
+    const text = inp.value.trim();
+    if (!text) return;
+
+    const posts = getPosts();
+    const p = posts.find(x => x.id === postId);
+    if (!p) return;
+
+    const me = getProfile();
+    p.comments = p.comments || [];
+    p.comments.push({
+        id: Date.now(),
+        author: me.name,
+        avatar: me.avatar,
+        text: text,
+        time: "Just now",
+        liked: false
+    });
+    p.showComments = true;
+    savePosts(posts);
+    inp.value = '';
+    renderFeed();
+    toast('Comment added! 💬');
+}
+
+function toggleCommentLike(postId, commentId) {
+    const posts = getPosts();
+    const p = posts.find(x => x.id === postId);
+    if (!p || !p.comments) return;
+    const c = p.comments.find(x => x.id === commentId);
+    if (c) {
+        c.liked = !c.liked;
+        savePosts(posts);
+        renderFeed();
+    }
+}
+
+function replyToComment(postId, author) {
+    const inp = document.getElementById(`commentInp-${postId}`);
+    if (inp) {
+        inp.value = `@${author} `;
+        inp.focus();
+    }
+}
+
+function togglePostDropdown(e, id) {
+    e.stopPropagation();
+    document.querySelectorAll('.post-dropdown').forEach(d => {
+        if (d.id !== `dropdown-${id}`) d.classList.remove('open');
+    });
+    const dd = document.getElementById(`dropdown-${id}`);
+    if (dd) dd.classList.toggle('open');
+}
+
+function toggleSavePost(id) {
+    let saved = getSaved();
+    if (saved.includes(id)) {
+        saved = saved.filter(x => x !== id);
+        toast('Post removed from Saved bookmarks 🔖');
+    } else {
+        saved.unshift(id);
+        toast('Post saved to Bookmarks! 🔖');
+    }
+    saveSaved(saved);
+    updateBadges();
+    renderFeed();
+}
+
+function deletePost(id) {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    let posts = getPosts().filter(p => p.id !== id);
+    savePosts(posts);
+    renderFeed();
+    updateProfileUI();
+    toast('Post deleted 🗑️');
+}
+
+function sharePost(id) {
+    const posts = getPosts();
+    const p = posts.find(x => x.id === id);
+    if (p) {
+        p.shares = (p.shares || 0) + 1;
+        savePosts(posts);
+        renderFeed();
+        toast('Post shared to your Feed! 🚀');
+    }
+}
+
+function copyPostLink(id) {
+    const url = window.location.origin + window.location.pathname + '#post-' + id;
+    if (navigator.clipboard) navigator.clipboard.writeText(url).catch(()=>{});
+    toast('Post link copied to clipboard! 📋');
+}
+
+// ==================== SEARCH & TAG FILTER ====================
+function handleSearch(val) {
+    const clearBtn = document.getElementById('searchClear');
+    if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+
+    if (!val.trim()) {
+        currentTagFilter = null;
+        renderFeed();
+        return;
+    }
+
+    const q = val.toLowerCase();
+    const filtered = getPosts().filter(p =>
+        (p.text && p.text.toLowerCase().includes(q)) ||
+        (p.author && p.author.toLowerCase().includes(q))
+    );
+    renderFeed(filtered);
+}
+
+function clearSearch() {
+    const inp = document.getElementById('searchInput');
+    if (inp) inp.value = '';
+    const clearBtn = document.getElementById('searchClear');
+    if (clearBtn) clearBtn.style.display = 'none';
+    currentTagFilter = null;
+    renderFeed();
+}
+
+function filterByTag(tag) {
+    currentTagFilter = tag;
+    const inp = document.getElementById('searchInput');
+    if (inp) inp.value = tag;
+    renderFeed();
+    toast(`Filtering by ${tag}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ==================== CREATE POST MODAL ====================
+let uploadedPostImage = null;
+let activeFeeling = null;
+
+function openCreateModal(triggerFile = false, keepFeeling = false) {
+    openModal('createPostModal');
+    document.getElementById('postContentInput').value = '';
+    clearPostImage();
+    if (!keepFeeling) {
+        activeFeeling = null;
+        const badge = document.getElementById('modalFeelingBadge');
+        if (badge) badge.style.display = 'none';
+    }
+    togglePostSubmitBtn();
+    if (triggerFile) {
+        setTimeout(() => document.getElementById('postImageFileInput').click(), 200);
+    } else {
+        setTimeout(() => document.getElementById('postContentInput').focus(), 150);
+    }
+}
+
+function togglePostSubmitBtn() {
+    const txt = document.getElementById('postContentInput').value.trim();
+    document.getElementById('postSubmitBtn').disabled = (!txt && !uploadedPostImage);
+}
+
+function handlePostImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        uploadedPostImage = ev.target.result;
+        const preview = document.getElementById('postImagePreviewTag');
+        preview.src = uploadedPostImage;
+        document.getElementById('postImagePreviewBox').style.display = 'block';
+        togglePostSubmitBtn();
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearPostImage() {
+    uploadedPostImage = null;
+    document.getElementById('postImagePreviewBox').style.display = 'none';
+    document.getElementById('postImagePreviewTag').src = '';
+    document.getElementById('postImageFileInput').value = '';
+    togglePostSubmitBtn();
+}
+
+function insertPostEmoji() {
+    const emojis = ['😀','❤️','🔥','🎉','🚀','👏','😍','🤔','💪','🙌','✨','💯','🥳'];
+    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    const ta = document.getElementById('postContentInput');
+    ta.value += emoji;
+    ta.focus();
+    togglePostSubmitBtn();
+}
+
+function submitNewPost() {
+    const text = document.getElementById('postContentInput').value.trim();
+    if (!text && !uploadedPostImage) return;
+
+    const me = getProfile();
+    const posts = getPosts();
+
+    let postText = text;
+    if (activeFeeling) {
+        postText = `${text} — is feeling ${activeFeeling.emoji} ${activeFeeling.label}`;
+    }
+
+    const newPost = {
+        id: Date.now(),
+        author: me.name,
+        avatar: me.avatar,
+        time: "Just now",
+        text: postText,
+        image: uploadedPostImage,
+        likes: 0,
+        liked: false,
+        reaction: null,
+        comments: [],
+        shares: 0,
+        showComments: false,
+        isOwn: true
+    };
+
+    posts.unshift(newPost);
+    savePosts(posts);
+    closeModal('createPostModal');
+    activeFeeling = null;
+    const badge = document.getElementById('modalFeelingBadge');
+    if (badge) badge.style.display = 'none';
+    renderFeed();
+    updateProfileUI();
+    toast('Your post has been published to Connectify! 🎉');
+}
+
+// ==================== FEELING MODAL ====================
+function openFeelingModal() { openModal('feelingModal'); }
+function selectFeeling(label, emoji) {
+    activeFeeling = { label, emoji };
+    closeModal('feelingModal');
+    openCreateModal(false, true);
+    const badge = document.getElementById('modalFeelingBadge');
+    badge.textContent = `— is feeling ${emoji} ${label}`;
+    badge.style.display = 'block';
+    toast(`Feeling set to ${emoji} ${label}`);
+}
+
+// ==================== LIVE BROADCAST SIMULATOR ====================
+let isLive = false;
+let liveInterval = null;
+
+function openLiveModal() { openModal('liveModal'); }
+function closeLiveModal() {
+    if (isLive) toggleLiveBroadcast();
+    closeModal('liveModal');
+}
+
+function toggleLiveBroadcast() {
+    const btn = document.getElementById('btnGoLive');
+    const badge = document.getElementById('liveViewerBadge');
+    const status = document.getElementById('liveStatusText');
+
+    if (!isLive) {
+        isLive = true;
+        btn.textContent = "End Broadcast";
+        btn.style.background = "#ef4444";
+        badge.style.display = "block";
+        status.textContent = "🔴 BROADCASTING LIVE...";
+        toast("You are now LIVE! 🔴");
+
+        liveInterval = setInterval(() => {
+            const count = document.getElementById('liveViewerCount');
+            if (count) count.textContent = Math.floor(140 + Math.random() * 120);
+        }, 2000);
+    } else {
+        isLive = false;
+        clearInterval(liveInterval);
+        btn.textContent = "Start Live Stream";
+        btn.style.background = "var(--primary)";
+        badge.style.display = "none";
+        status.textContent = "Live broadcast ended & recorded!";
+        toast("Live stream saved to your feed 📹");
+    }
+}
+
+// ==================== WATCH, GROUPS & FRIENDS MODALS ====================
+function openWatchModal() { openModal('watchModal'); }
+function playSimulatedVideo(el, title) {
+    el.innerHTML = '<span style="font-size:18px;font-weight:700;position:relative;z-index:2;">▶️ Playing Video...</span>';
+    toast(`Now streaming: "${title}"`);
+}
+
+function openGroupsModal() { openModal('groupsModal'); }
+function toggleGroupJoin(btn) {
+    if (btn.textContent === 'Joined') {
+        btn.textContent = 'Join';
+        btn.style.background = 'var(--hover-bg)';
+        btn.style.color = 'var(--text)';
+        toast('Left group');
+    } else {
+        btn.textContent = 'Joined';
+        btn.style.background = 'var(--primary)';
+        btn.style.color = 'white';
+        toast('Joined group! Welcome 🎉');
+    }
+}
+
+function openFriendsModal() {
+    const members = getAllMembers();
+    const container = document.getElementById('friendsModalList');
+    container.innerHTML = members.map(m => `
+        <div class="popover-item" style="border-radius:12px;margin-bottom:8px;border:1px solid var(--border-light);">
+            <img class="popover-avatar" src="${m.avatar}" alt="${escapeHtml(m.name)}">
+            <div class="popover-info">
+                <strong>${escapeHtml(m.name)}</strong>
+                <span>${escapeHtml(m.role || 'Member')} · ${m.location || 'Cairo'}</span>
+            </div>
+            <div style="display:flex;gap:6px;">
+                <button class="btn-post" style="width:auto;padding:6px 14px;font-size:12.5px;" onclick="closeModal('friendsModal'); openChat('${m.id}')">Chat</button>
+            </div>
+        </div>
+    `).join('');
+    openModal('friendsModal');
+}
+
+function openSavedModal() {
+    const savedIds = getSaved();
+    const posts = getPosts();
+    const savedPosts = posts.filter(p => savedIds.includes(p.id));
+    const container = document.getElementById('savedPostsList');
+
+    if (!savedPosts.length) {
+        container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-secondary);font-size:14px;">No saved bookmarks yet. Save any post from its 3-dots menu!</div>`;
+    } else {
+        container.innerHTML = savedPosts.map(p => `
+            <div class="popover-item" style="border-radius:10px;margin-bottom:8px;border:1px solid var(--border-light);">
+                <img class="popover-avatar" src="${p.avatar}" alt="${escapeHtml(p.author)}">
+                <div class="popover-info">
+                    <strong>${escapeHtml(p.author)}</strong>
+                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px;">${escapeHtml(p.text || 'Photo Post')}</span>
+                </div>
+                <button class="btn-post" style="width:auto;padding:6px 12px;font-size:12px;background:var(--red);" onclick="toggleSavePost(${p.id}); openSavedModal();">Remove</button>
+            </div>
+        `).join('');
+    }
+    openModal('savedModal');
+    closeAllPopovers();
+}
+
+function openAdModal(title, desc) {
+    toast(`Sponsored: ${title}`);
+}
+
+function openLightbox(src) {
+    document.getElementById('lightboxImg').src = src;
+    openModal('lightboxModal');
+}
+
+// ==================== POPOVER & MODAL UTILITIES ====================
+function togglePopover(id) {
+    const pop = document.getElementById(id);
+    const isOpen = pop.classList.contains('open');
+    closeAllPopovers();
+    if (!isOpen) pop.classList.add('open');
+}
+
+function closeAllPopovers() {
+    document.querySelectorAll('.popover').forEach(p => p.classList.remove('open'));
+}
+
+function openModal(id) {
+    const m = document.getElementById(id);
+    if (m) {
+        m.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(id) {
+    const m = document.getElementById(id);
+    if (m) {
+        m.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+// Toast
+let toastTimer = null;
+function toast(msg) {
+    const t = document.getElementById('toast');
+    const txt = document.getElementById('toastText');
+    if (!t || !txt) return;
+    txt.textContent = msg;
+    t.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function escapeHtml(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+// ==================== WEB CALCULATOR ENGINE ====================
+let calcExpression = '';
+let calcCurrentVal = '0';
+let calcHasEvaluated = false;
+let calcHistory = [];
+
+function initCalc() {
+    try {
+        const stored = localStorage.getItem('socialvibe_calc_history');
+        if (stored) calcHistory = JSON.parse(stored);
+    } catch(e) {}
+    renderCalcHistory();
+}
+
+function toggleCalculator() {
+    const win = document.getElementById('calculatorWindow');
+    if (!win) return;
+    const isHidden = win.style.display === 'none' || win.style.display === '';
+    win.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) {
+        document.getElementById('calcHistoryDrawer').style.display = 'none';
+    }
+}
+
+function minimizeCalculator() {
+    const win = document.getElementById('calculatorWindow');
+    if (win) win.style.display = 'none';
+}
+
+function toggleCalcScientific() {
+    const row = document.getElementById('calcSciRow');
+    const btn = document.getElementById('btnCalcSciToggle');
+    if (!row) return;
+    const isHidden = row.style.display === 'none' || row.style.display === '';
+    row.style.display = isHidden ? 'grid' : 'none';
+    if (btn) btn.style.color = isHidden ? 'var(--primary)' : 'var(--text-secondary)';
+}
+
+function toggleCalcHistory() {
+    const d = document.getElementById('calcHistoryDrawer');
+    if (!d) return;
+    d.style.display = (d.style.display === 'none' || d.style.display === '') ? 'flex' : 'none';
+}
+
+function updateCalcDisplay() {
+    const exprEl = document.getElementById('calcExpr');
+    const valEl = document.getElementById('calcVal');
+    if (exprEl) exprEl.textContent = calcExpression;
+    if (valEl) valEl.textContent = calcCurrentVal;
+}
+
+function calcInput(char) {
+    if (calcHasEvaluated) {
+        if (!isNaN(char) || char === '.') {
+            calcCurrentVal = '0';
+            calcExpression = '';
+        }
+        calcHasEvaluated = false;
+    }
+
+    if (char === '.') {
+        if (calcCurrentVal.includes('.')) return;
+        calcCurrentVal += '.';
+    } else if (char === '(' || char === ')') {
+        if (calcCurrentVal === '0') {
+            calcCurrentVal = char;
+        } else {
+            calcCurrentVal += char;
+        }
+    } else {
+        if (calcCurrentVal === '0' || calcCurrentVal === 'Error') {
+            calcCurrentVal = char;
+        } else {
+            calcCurrentVal += char;
+        }
+    }
+    updateCalcDisplay();
+}
+
+function calcOperator(op) {
+    const opDisplay = op === '*' ? '×' : (op === '/' ? '÷' : op);
+    if (calcHasEvaluated) {
+        calcExpression = calcCurrentVal + ' ' + opDisplay + ' ';
+        calcHasEvaluated = false;
+    } else {
+        calcExpression += (calcCurrentVal ? calcCurrentVal : '0') + ' ' + opDisplay + ' ';
+    }
+    calcCurrentVal = '0';
+    updateCalcDisplay();
+}
+
+function calcCalculate() {
+    try {
+        let fullExpr = (calcExpression + calcCurrentVal).trim();
+        if (!fullExpr) return;
+
+        // Replace display symbols with math operators
+        let sanitized = fullExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+        
+        // Safe evaluation of mathematical arithmetic
+        if (!/^[0-9+\-*/().\s%]+$/.test(sanitized)) {
+            calcCurrentVal = 'Error';
+            updateCalcDisplay();
+            return;
+        }
+
+        // Handle percentages e.g. 50%
+        sanitized = sanitized.replace(/([0-9.]+)%/g, '($1/100)');
+
+        // Evaluate using Function constructor
+        const result = Function('"use strict"; return (' + sanitized + ')')();
+        
+        if (!isFinite(result)) {
+            calcCurrentVal = 'Cannot divide by 0';
+        } else {
+            // Clean rounding for floating point issues
+            calcCurrentVal = String(Math.round(result * 100000000) / 100000000);
+            
+            // Add to history
+            calcHistory.unshift({
+                expr: fullExpr,
+                res: calcCurrentVal,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+            if (calcHistory.length > 20) calcHistory.pop();
+            localStorage.setItem('socialvibe_calc_history', JSON.stringify(calcHistory));
+            renderCalcHistory();
+        }
+
+        calcExpression = fullExpr + ' =';
+        calcHasEvaluated = true;
+    } catch(err) {
+        calcCurrentVal = 'Error';
+    }
+    updateCalcDisplay();
+}
+
+function calcClearAll() {
+    calcExpression = '';
+    calcCurrentVal = '0';
+    calcHasEvaluated = false;
+    updateCalcDisplay();
+}
+
+function calcClearEntry() {
+    calcCurrentVal = '0';
+    updateCalcDisplay();
+}
+
+function calcBackspace() {
+    if (calcHasEvaluated) {
+        calcClearAll();
+        return;
+    }
+    if (calcCurrentVal.length > 1) {
+        calcCurrentVal = calcCurrentVal.slice(0, -1);
+    } else {
+        calcCurrentVal = '0';
+    }
+    updateCalcDisplay();
+}
+
+function calcNegate() {
+    if (calcCurrentVal === '0' || calcCurrentVal === 'Error') return;
+    if (calcCurrentVal.startsWith('-')) {
+        calcCurrentVal = calcCurrentVal.substring(1);
+    } else {
+        calcCurrentVal = '-' + calcCurrentVal;
+    }
+    updateCalcDisplay();
+}
+
+function calcSci(fn) {
+    const val = parseFloat(calcCurrentVal);
+    if (isNaN(val)) return;
+    let res = 0;
+    let expr = '';
+
+    switch(fn) {
+        case 'sin':
+            res = Math.sin(val * Math.PI / 180);
+            expr = `sin(${val}°)`;
+            break;
+        case 'cos':
+            res = Math.cos(val * Math.PI / 180);
+            expr = `cos(${val}°)`;
+            break;
+        case 'tan':
+            res = Math.tan(val * Math.PI / 180);
+            expr = `tan(${val}°)`;
+            break;
+        case 'sqrt':
+            if (val < 0) { calcCurrentVal = 'Invalid Input'; updateCalcDisplay(); return; }
+            res = Math.sqrt(val);
+            expr = `√(${val})`;
+            break;
+        case 'sqr':
+            res = Math.pow(val, 2);
+            expr = `sqr(${val})`;
+            break;
+        case 'inv':
+            if (val === 0) { calcCurrentVal = 'Cannot divide by 0'; updateCalcDisplay(); return; }
+            res = 1 / val;
+            expr = `1/(${val})`;
+            break;
+        case 'pi':
+            res = Math.PI;
+            expr = 'π';
+            break;
+    }
+
+    calcCurrentVal = String(Math.round(res * 100000000) / 100000000);
+    calcExpression = expr + ' =';
+    calcHasEvaluated = true;
+    updateCalcDisplay();
+}
+
+function renderCalcHistory() {
+    const list = document.getElementById('calcHistoryList');
+    if (!list) return;
+    if (calcHistory.length === 0) {
+        list.innerHTML = '<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:12px;">No calculations yet</div>';
+        return;
+    }
+    list.innerHTML = calcHistory.map((item) => `
+        <div class="calc-hist-item" onclick="loadCalcHistoryItem('${escapeHtml(item.res)}')">
+            <div class="calc-hist-expr">${escapeHtml(item.expr)}</div>
+            <div class="calc-hist-res">= ${escapeHtml(item.res)}</div>
+        </div>
+    `).join('');
+}
+
+function loadCalcHistoryItem(val) {
+    calcCurrentVal = val;
+    calcExpression = '';
+    calcHasEvaluated = true;
+    updateCalcDisplay();
+    document.getElementById('calcHistoryDrawer').style.display = 'none';
+}
+
+function clearCalcHistory() {
+    calcHistory = [];
+    localStorage.removeItem('socialvibe_calc_history');
+    renderCalcHistory();
+    toast('Calculator history cleared 🧹');
+}
+
+function copyCalcResult() {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(calcCurrentVal).then(() => {
+            toast(`Result ${calcCurrentVal} copied to clipboard! 📋`);
+        }).catch(() => {});
+    } else {
+        toast(`Result: ${calcCurrentVal}`);
+    }
+}
+
+function shareCalcToFeed() {
+    const full = calcExpression ? `${calcExpression} ${calcCurrentVal}` : `Calculated result: ${calcCurrentVal}`;
+    const txt = `🧮 Web Calculator Calculation:\n${full}`;
+    
+    if (typeof openCreateModal === 'function') {
+        openCreateModal();
+        const inp = document.getElementById('postContentInput');
+        if (inp) {
+            inp.value = txt;
+            if (typeof togglePostSubmitBtn === 'function') togglePostSubmitBtn();
+        }
+        minimizeCalculator();
+        toast('Calculator result added to new post! 📝');
+    }
+}
+
+function sendCalcToChat() {
+    const full = calcExpression ? `${calcExpression} ${calcCurrentVal}` : `Calculated: ${calcCurrentVal}`;
+    const chatInputs = document.querySelectorAll('.chat-input-bar input');
+    if (chatInputs.length > 0) {
+        const firstInp = chatInputs[0];
+        firstInp.value = `🧮 ${full}`;
+        firstInp.focus();
+        toast('Calculation pasted into active chat! 💬');
+    } else {
+        const members = (typeof getAllMembers === 'function') ? getAllMembers() : [];
+        if (members.length > 0 && typeof openChat === 'function') {
+            openChat(members[0].id);
+            setTimeout(() => {
+                const inp = document.getElementById(`chatInp-${members[0].id}`);
+                if (inp) {
+                    inp.value = `🧮 ${full}`;
+                    inp.focus();
+                }
+            }, 300);
+            toast(`Chat opened with ${members[0].name} & result pasted!`);
+        } else {
+            toast(`Calculated: ${full}`);
+        }
+    }
+}
+
+// Global Keyboard Listener for Calculator
+window.addEventListener('keydown', (e) => {
+    const win = document.getElementById('calculatorWindow');
+    if (!win || win.style.display === 'none' || win.style.display === '') return;
+    
+    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+    if (!isNaN(e.key)) {
+        calcInput(e.key);
+    } else if (['+', '-', '*', '/'].includes(e.key)) {
+        calcOperator(e.key);
+    } else if (e.key === 'Enter' || e.key === '=') {
+        e.preventDefault();
+        calcCalculate();
+    } else if (e.key === 'Backspace') {
+        calcBackspace();
+    } else if (e.key === 'Escape') {
+        calcClearAll();
+    } else if (e.key === '.') {
+        calcInput('.');
+    }
+});
+</script>
+</body>
+</html>
