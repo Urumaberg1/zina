@@ -51,54 +51,39 @@ function handleGet() {
 
 function handleCreateOrUpdate() {
     $data = json_decode(file_get_contents('php://input'), true);
-    
+
+    session_start();
+    if (empty($_SESSION['user_id'])) {
+        jsonResponse(['error' => 'Please sign in to update your profile.'], 401);
+    }
     if (empty($data['display_name'])) {
         jsonResponse(['error' => 'Display name is required'], 400);
     }
-    
-    $name = htmlspecialchars($data['display_name']);
-    $bio = htmlspecialchars($data['bio'] ?? '');
+
+    $name = trim($data['display_name']);
+    $bio = trim($data['bio'] ?? '');
     $avatar = $data['avatar'] ?? '';
-    $work = htmlspecialchars($data['work'] ?? '');
-    $education = htmlspecialchars($data['education'] ?? '');
-    $location = htmlspecialchars($data['location'] ?? 'Cairo, Egypt');
-    
+    $work = trim($data['work'] ?? '');
+    $education = trim($data['education'] ?? '');
+    $location = trim($data['location'] ?? '');
+
+    $conn = initDatabase();
+    $stmt = $conn->prepare('UPDATE users SET display_name = ?, bio = ?, avatar = ?, work = ?, education = ?, location = ? WHERE id = ?');
+    $stmt->execute([$name, $bio, $avatar, $work, $education, $location, (int)$_SESSION['user_id']]);
     $savedUser = [
-        'id' => time(),
+        'id' => (int)$_SESSION['user_id'],
         'display_name' => $name,
         'bio' => $bio,
         'avatar' => $avatar,
         'work' => $work,
         'education' => $education,
-        'location' => $location,
-        'created_at' => date('Y-m-d H:i:s')
+        'location' => $location
     ];
-    
-    // Try database
-    try {
-        $conn = getConnection();
-        initDatabase();
-        $username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $name)) . '_' . rand(100, 999);
-        $email = $username . '@connectify.com';
-        
-        $stmt = $conn->prepare("INSERT INTO users (username, email, password, display_name, bio, avatar, work, education, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$username, $email, 'hashed_demo_pw', $name, $bio, $avatar, $work, $education, $location]);
-        $savedUser['id'] = $conn->lastInsertId();
-    } catch (Exception $e) {
-        // Fallback file persistence
-        $jsonFile = __DIR__ . '/users_data.json';
-        $current = [];
-        if (file_exists($jsonFile)) {
-            $current = json_decode(file_get_contents($jsonFile), true) ?: [];
-        }
-        $current[] = $savedUser;
-        file_put_contents($jsonFile, json_encode($current, JSON_PRETTY_PRINT));
-    }
-    
+
     jsonResponse([
         'status' => 'success',
-        'message' => 'Profile saved to database successfully!',
+        'message' => 'Profile updated successfully.',
         'user' => $savedUser
-    ], 201);
+    ]);
 }
 ?>

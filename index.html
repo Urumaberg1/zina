@@ -921,9 +921,9 @@
         <button class="nav-btn" onclick="location.href='profile.html'" title="My Profile Page">
             <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
         </button>
-        <button class="nav-btn" id="btnNavNotif" onclick="togglePopover('notifPopover')" title="Notifications">
+        <button class="nav-btn" id="btnNavNotif" onclick="toggleAppPopover('notifPopover')" title="Notifications">
             <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-            <span class="nav-badge" id="notifBadge">3</span>
+            <span class="nav-badge" id="notifBadge" style="display:none;">0</span>
         </button>
     </div>
 
@@ -940,15 +940,15 @@
         </button>
 
         <!-- Messenger Drawer Button -->
-        <button class="icon-btn" onclick="togglePopover('messagesPopover')" title="Messenger Chats">
+        <button class="icon-btn" onclick="toggleAppPopover('messagesPopover')" title="Messenger Chats">
             <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
-            <span class="nav-badge" id="msgBadge">2</span>
+            <span class="nav-badge" id="msgBadge" style="display:none;">0</span>
         </button>
 
         <!-- Profile Avatar & Popover Menu -->
         <div style="display:flex;align-items:center;gap:4px;">
             <img class="user-pic" id="navAvatarPic" src="" alt="User" onclick="location.href='profile.html'" title="My Profile (Click to View Profile)" style="cursor:pointer;border:2px solid var(--primary);">
-            <button class="icon-btn" style="width:28px;height:28px;padding:3px;" onclick="togglePopover('profilePopover')" title="Account Options">
+            <button class="icon-btn" style="width:28px;height:28px;padding:3px;" onclick="toggleAppPopover('profilePopover')" title="Account Options">
                 <svg viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M7 10l5 5 5-5z"/></svg>
             </button>
         </div>
@@ -966,7 +966,7 @@
         <div class="popover" id="messagesPopover">
             <div class="popover-header">
                 <h3>Messages</h3>
-                <a onclick="openCreateUserModal()">+ New Member</a>
+                <a id="messagesPopoverAction" onclick="openCreateUserModal()">Sign in</a>
             </div>
             <div id="messagesList"></div>
         </div>
@@ -987,7 +987,7 @@
             </button>
             <button class="profile-menu-btn" onclick="openCreateUserModal()">
                 <svg viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                Add New Person / Profile
+                Find Friends
             </button>
             <button class="profile-menu-btn" onclick="openSavedModal()">
                 <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
@@ -998,9 +998,9 @@
                 <span id="menuThemeText">Switch to Dark Mode</span>
             </button>
             <div style="height:1px;background:var(--border-light);margin:6px 0;"></div>
-            <button class="profile-menu-btn" onclick="toast('Account switched successfully!'); setTimeout(()=>location.reload(), 800);">
+            <button class="profile-menu-btn" id="accountMenuAction" onclick="handleAccountAction()">
                 <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
-                Switch Account
+                Sign in
             </button>
         </div>
     </div>
@@ -1019,7 +1019,7 @@
                 <p id="sideBio">Welcome to Connectify!</p>
                 <div class="profile-mini-stats">
                     <div onclick="location.href='profile.html'"><strong id="sidePostCount">0</strong><span>Posts</span></div>
-                    <div onclick="openFriendsModal()"><strong id="sideFriendsCount">8</strong><span>Friends</span></div>
+                    <div onclick="openFriendsModal()"><strong id="sideFriendsCount">0</strong><span>Friends</span></div>
                     <div onclick="location.href='profile.html'"><strong>312</strong><span>Photos</span></div>
                 </div>
             </div>
@@ -1043,7 +1043,7 @@
                 <div class="menu-icon" style="background:linear-gradient(135deg,#ec4899,#f43f5e)">
                     <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
                 </div>
-                Community Members (<span id="memberCountBadge">8</span>)
+                Friends (<span id="memberCountBadge">0</span>)
             </button>
             <button class="nav-menu-item" onclick="openGroupsModal()">
                 <div class="menu-icon" style="background:linear-gradient(135deg,#10b981,#06b6d4)">
@@ -1070,10 +1070,10 @@
                 Web Calculator (الآلة الحاسبة)
             </button>
 
-            <!-- Add New Person Button -->
+            <!-- Find Friends Shortcut -->
             <button class="btn-add-profile" onclick="openCreateUserModal()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                Add Person to Network
+                Find Friends
             </button>
         </div>
 
@@ -1132,7 +1132,7 @@
         <div id="postsFeed"></div>
     </section>
 
-    <!-- RIGHT SIDEBAR (ONLINE CONTACTS & AI CHAT) -->
+    <!-- RIGHT SIDEBAR (FRIENDS & MESSAGING) -->
     <aside class="sidebar-r">
         <!-- Add New Profile Fast CTA -->
         <div class="card card-pad" style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(139,92,246,0.08));border:1px dashed var(--primary);">
@@ -1148,7 +1148,7 @@
         <!-- Online Contacts -->
         <div class="card card-pad" style="margin-top:16px">
             <div class="online-header">
-                <h4>Contacts (<span id="contactsCount">8</span>)</h4>
+                <h4>Friends (<span id="contactsCount">0</span>)</h4>
                 <button onclick="document.getElementById('searchInput').focus(); toast('Search for friends in search bar');" title="Search">
                     <svg viewBox="0 0 24 24" fill="var(--text-secondary)" width="18" height="18"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                 </button>
@@ -1175,48 +1175,35 @@
     </aside>
 </div>
 
-<!-- ========== MODAL: CREATE NEW PERSON / PROFILE ========== -->
+<!-- ========== MODAL: ACCOUNT ACCESS ========== -->
 <div class="modal-overlay" id="createUserModal">
     <div class="modal-box">
         <div class="modal-head">
-            <h3>Add New Person to Social Network</h3>
+            <h3 id="accountModalTitle">Create your account</h3>
             <button class="modal-close" onclick="closeModal('createUserModal')">✕</button>
         </div>
         <div class="modal-body">
-            <p style="font-size:13.5px;color:var(--text-secondary);margin-bottom:14px;">
-                Create a new person with a real photo. They will be saved directly into the database and you can immediately chat with them using intelligent AI!
-            </p>
-            <div class="modal-field">
-                <label>Full Name *</label>
-                <input type="text" id="newUserName" placeholder="e.g. Ziad Mansour, Mariam Fathy">
+            <div class="modal-field" id="accountNameField">
+                <label for="accountDisplayName">Display name</label>
+                <input type="text" id="accountDisplayName" maxlength="100" autocomplete="name" placeholder="Your name">
+            </div>
+            <div class="modal-field" id="accountUsernameField">
+                <label for="accountUsername">Username</label>
+                <input type="text" id="accountUsername" maxlength="50" autocomplete="username" placeholder="letters, numbers, underscores">
             </div>
             <div class="modal-field">
-                <label>Job Title / Headline *</label>
-                <input type="text" id="newUserRole" placeholder="e.g. AI Engineer, Product Designer, Student">
+                <label for="accountEmail">Email</label>
+                <input type="email" id="accountEmail" maxlength="100" autocomplete="email" placeholder="you@example.com">
             </div>
             <div class="modal-field">
-                <label>Bio / Status</label>
-                <textarea id="newUserBio" rows="2" placeholder="Tell us something about this person..."></textarea>
+                <label for="accountPassword">Password</label>
+                <input type="password" id="accountPassword" autocomplete="new-password" placeholder="At least 8 characters">
             </div>
-            <div class="modal-field">
-                <label>City / Location</label>
-                <input type="text" id="newUserLocation" placeholder="e.g. Cairo, Egypt">
-            </div>
-            <div class="modal-field">
-                <label>Choose Profile Picture Preset</label>
-                <div style="display:flex;gap:10px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;" id="avatarPresets">
-                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic active-preset" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
-                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
-                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
-                    <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
-                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80" class="user-pic preset-pic" onclick="selectPresetAvatar(this)" style="width:48px;height:48px;">
-                </div>
-                <div style="text-align:center;font-size:12px;color:var(--text-secondary);">Or upload custom photo: <input type="file" id="customUserPicInput" accept="image/*" onchange="handleCustomAvatarUpload(event)"></div>
-            </div>
+            <p id="accountError" role="alert" style="color:var(--red);font-size:13px;min-height:18px;"></p>
         </div>
         <div class="modal-foot">
-            <button class="btn-post" onclick="submitNewProfileToDatabase()">Save Profile to Database & Start Chatting</button>
+            <button class="btn-post" id="accountSubmitButton" onclick="submitAccountForm()">Create account</button>
+            <button class="profile-menu-btn" id="accountModeButton" onclick="toggleAccountMode()" style="justify-content:center;">Already have an account? Sign in</button>
         </div>
     </div>
 </div>
@@ -1401,10 +1388,17 @@
 <div class="modal-overlay" id="friendsModal">
     <div class="modal-box" style="max-width:600px;">
         <div class="modal-head">
-            <h3>🤝 Community Members</h3>
+            <h3>People and friend requests</h3>
             <button class="modal-close" onclick="closeModal('friendsModal')">✕</button>
         </div>
-        <div class="modal-body" id="friendsModalList"></div>
+        <div class="modal-body">
+            <div class="modal-field">
+                <label for="memberSearchInput">Find someone by username or name</label>
+                <input type="search" id="memberSearchInput" autocomplete="off" placeholder="Search usernames..." oninput="searchMembers(this.value)">
+            </div>
+            <div id="memberSearchResults"></div>
+            <div id="friendsModalList"></div>
+        </div>
     </div>
 </div>
 
@@ -1527,7 +1521,7 @@
     </div>
 </div>
 
-<!-- ========== FLOATING REALISTIC AI CHAT DOCK ========== -->
+<!-- ========== DIRECT MESSAGE DOCK ========== -->
 <div class="chat-dock" id="chatDock"></div>
 
 <!-- ========== TOAST NOTIFICATION ========== -->
@@ -1544,7 +1538,100 @@ const USERS_KEY = 'socialvibe_users';
 const SAVED_KEY = 'socialvibe_saved';
 const NOTIFS_KEY = 'socialvibe_notifs';
 const THEME_KEY = 'connectify_theme';
-const CHATS_PREFIX = 'connectify_chat_';
+const ACCOUNT_API = 'php/account.php';
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+let currentAccount = null;
+let databaseFriends = [];
+let currentNotifications = [];
+let databasePosts = [];
+
+async function accountApi(action, options = {}) {
+    const method = options.method || 'GET';
+    const url = method === 'GET' ? `${ACCOUNT_API}?action=${encodeURIComponent(action)}${options.query || ''}` : `${ACCOUNT_API}?action=${encodeURIComponent(action)}`;
+    const response = await fetch(url, {
+        method,
+        credentials: 'same-origin',
+        headers: method === 'POST' ? { 'Content-Type': 'application/json' } : {},
+        body: method === 'POST' ? JSON.stringify(options.body || {}) : undefined
+    });
+    let result;
+    try {
+        result = await response.json();
+    } catch (error) {
+        throw new Error('Connectify could not reach its PHP account service. Run the site through PHP with MySQL enabled.');
+    }
+    if (!response.ok) throw new Error(result.error || 'The request could not be completed.');
+    return result;
+}
+
+async function postsApi(endpoint, options = {}) {
+    const method = options.method || 'GET';
+    const response = await fetch(`php/${endpoint}.php${options.query || ''}`, {
+        method,
+        credentials: 'same-origin',
+        headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' },
+        body: method === 'GET' ? undefined : JSON.stringify(options.body || {})
+    });
+    let result;
+    try {
+        result = await response.json();
+    } catch (error) {
+        throw new Error('Connectify could not read the response from its PHP service.');
+    }
+    if (!response.ok) throw new Error(result.error || 'The request could not be completed.');
+    return result;
+}
+
+function mapDatabasePost(post) {
+    return {
+        id: Number(post.id),
+        authorId: String(post.user_id),
+        author: post.author,
+        avatar: post.author_avatar || DEFAULT_AVATAR,
+        time: new Date(post.created_at.replace(' ', 'T')).toLocaleString(),
+        text: post.content || '',
+        image: post.image || null,
+        likes: Number(post.likes_count || 0),
+        liked: Boolean(post.liked),
+        reaction: post.liked ? 'like' : null,
+        comments: (post.comments || []).map(comment => ({
+            id: Number(comment.id),
+            author: comment.author,
+            avatar: comment.author_avatar || DEFAULT_AVATAR,
+            text: comment.content,
+            time: new Date(comment.created_at.replace(' ', 'T')).toLocaleString(),
+            liked: false
+        })),
+        shares: 0,
+        showComments: false,
+        isOwn: Boolean(currentAccount && Number(post.user_id) === Number(currentAccount.id))
+    };
+}
+
+async function refreshDatabasePosts(mine = false) {
+    const result = await postsApi('posts', { query: mine ? '?mine=1' : '' });
+    databasePosts = (result.posts || []).map(mapDatabasePost);
+    return databasePosts;
+}
+
+function requireSignedIn() {
+    if (currentAccount) return true;
+    openCreateUserModal();
+    toast('Sign in to continue.');
+    return false;
+}
+
+function toMember(user) {
+    return {
+        id: String(user.id),
+        username: user.username,
+        name: user.display_name,
+        role: user.work || 'Connectify member',
+        avatar: user.avatar || DEFAULT_AVATAR,
+        bio: user.bio || '',
+        location: user.location || ''
+    };
+}
 
 // Default Realistic Members with real face profile pictures & personalities
 const DEFAULT_MEMBERS = [
@@ -1696,36 +1783,22 @@ const INITIAL_POSTS = [
     }
 ];
 
-// Initial Dynamic Notifications
-const INITIAL_NOTIFICATIONS = [
-    { id: 1, type: "like", userId: "usr_sara", userName: "Sara Ahmed", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80", text: "reacted ❤️ to your post", time: "20m ago", read: false, postId: 1 },
-    { id: 2, type: "msg", userId: "usr_mohamed", userName: "Mohamed Ali", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", text: "sent you a new message: 'Hey! Free for a quick tech chat?'", time: "1h ago", read: false },
-    { id: 3, type: "comment", userId: "usr_layla", userName: "Layla Hassan", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", text: "commented on your photo: 'Looks amazing!'", time: "3h ago", read: false, postId: 2 },
-    { id: 4, type: "group", userId: "usr_ahmed", userName: "Ahmed Nasser", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80", text: "invited you to join 'Frontend Developers Network'", time: "1d ago", read: true }
-];
-
 // Helper Data Methods
 function getAllMembers() {
     try {
         const stored = localStorage.getItem(USERS_KEY);
         if (stored) return JSON.parse(stored);
     } catch(e) {}
-    localStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_MEMBERS));
-    return DEFAULT_MEMBERS;
+    return [];
 }
 function saveAllMembers(members) {
     localStorage.setItem(USERS_KEY, JSON.stringify(members));
 }
 
 function getPosts() {
-    try {
-        const s = localStorage.getItem(POSTS_KEY);
-        if (s) return JSON.parse(s);
-    } catch(e) {}
-    localStorage.setItem(POSTS_KEY, JSON.stringify(INITIAL_POSTS));
-    return INITIAL_POSTS;
+    return databasePosts;
 }
-function savePosts(p) { localStorage.setItem(POSTS_KEY, JSON.stringify(p)); }
+function savePosts(p) { databasePosts = p; }
 
 function getProfile() {
     try {
@@ -1737,14 +1810,8 @@ function getProfile() {
 }
 
 function getNotifications() {
-    try {
-        const s = localStorage.getItem(NOTIFS_KEY);
-        if (s) return JSON.parse(s);
-    } catch(e) {}
-    localStorage.setItem(NOTIFS_KEY, JSON.stringify(INITIAL_NOTIFICATIONS));
-    return INITIAL_NOTIFICATIONS;
+    return currentNotifications;
 }
-function saveNotifications(n) { localStorage.setItem(NOTIFS_KEY, JSON.stringify(n)); }
 
 function getSaved() {
     try {
@@ -1792,18 +1859,12 @@ let currentTagFilter = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
-    updateProfileUI();
-    renderStories();
-    renderFeed();
-    renderContacts();
-    renderNotificationsPopover();
-    renderMessagesPopover();
-    updateBadges();
     initCalc();
+    initializeAccount();
 
     // Close on outer click
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.nav-right') && !e.target.closest('.popover')) {
+        if (!e.target.closest('.nav-right') && !e.target.closest('.nav-center') && !e.target.closest('.popover')) {
             closeAllPopovers();
         }
         if (!e.target.closest('.post-menu-trigger') && !e.target.closest('.post-dropdown')) {
@@ -1814,6 +1875,51 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+async function initializeAccount() {
+    try {
+        const result = await accountApi('me');
+        currentAccount = result.user;
+        if (currentAccount) {
+            const profile = getProfile();
+            profile.name = currentAccount.display_name;
+            profile.username = currentAccount.username;
+            profile.userId = currentAccount.id;
+            profile.bio = currentAccount.bio || '';
+            profile.avatar = currentAccount.avatar || DEFAULT_AVATAR;
+            profile.work = currentAccount.work || '';
+            profile.location = currentAccount.location || '';
+            localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+            const resultFriends = await accountApi('friends');
+            databaseFriends = resultFriends.friends || [];
+            saveAllMembers(databaseFriends.filter(friend => friend.friendship_status === 'accepted').map(toMember));
+        } else {
+            databaseFriends = [];
+            localStorage.removeItem(USERS_KEY);
+        }
+    } catch (error) {
+        currentAccount = null;
+        databaseFriends = [];
+        localStorage.removeItem(USERS_KEY);
+        toast(error.message);
+    }
+    try {
+        await refreshDatabasePosts();
+    } catch (error) {
+        databasePosts = [];
+        toast(error.message);
+    }
+    updateProfileUI();
+    renderStories();
+    renderFeed();
+    renderContacts();
+    renderNotificationsPopover();
+    renderMessagesPopover();
+    updateBadges();
+    const params = new URLSearchParams(location.search);
+    if (params.has('auth') && !currentAccount) openCreateUserModal();
+    if (params.has('chat') && currentAccount) openChat(params.get('chat'));
+}
 
 function updateProfileUI() {
     const p = getProfile();
@@ -1833,6 +1939,10 @@ function updateProfileUI() {
     if (modalAuthor) modalAuthor.textContent = p.name;
     const menuName = document.getElementById('menuName');
     if (menuName) menuName.textContent = p.name;
+    const accountAction = document.getElementById('accountMenuAction');
+    if (accountAction) accountAction.lastChild.textContent = currentAccount ? 'Sign out' : 'Sign in';
+    const messagesAction = document.getElementById('messagesPopoverAction');
+    if (messagesAction) messagesAction.textContent = currentAccount ? 'Find friends' : 'Sign in';
     const postCount = document.getElementById('sidePostCount');
     if (postCount) postCount.textContent = myPosts.length;
     const friendsCount = document.getElementById('sideFriendsCount');
@@ -1843,11 +1953,16 @@ function updateProfileUI() {
 
 function updateBadges() {
     const notifs = getNotifications();
-    const unreadNotifs = notifs.filter(n => !n.read).length;
+    const unreadMessages = notifs.filter(notification => notification.type === 'message').length;
     const notifBadge = document.getElementById('notifBadge');
     if (notifBadge) {
-        notifBadge.textContent = unreadNotifs;
-        notifBadge.style.display = unreadNotifs > 0 ? 'flex' : 'none';
+        notifBadge.textContent = notifs.length;
+        notifBadge.style.display = notifs.length > 0 ? 'flex' : 'none';
+    }
+    const messageBadge = document.getElementById('msgBadge');
+    if (messageBadge) {
+        messageBadge.textContent = unreadMessages;
+        messageBadge.style.display = unreadMessages > 0 ? 'flex' : 'none';
     }
 
     const saved = getSaved();
@@ -1855,7 +1970,7 @@ function updateBadges() {
     if (savedBadge) savedBadge.textContent = saved.length;
 }
 
-// ==================== CONTACTS & AI CHAT ====================
+// ==================== FRIENDS & DIRECT MESSAGES ====================
 function renderContacts() {
     const members = getAllMembers();
     const container = document.getElementById('contactsList');
@@ -1863,6 +1978,10 @@ function renderContacts() {
     if (countEl) countEl.textContent = members.length;
 
     if (!container) return;
+    if (!members.length) {
+        container.innerHTML = '<p style="padding:8px;color:var(--text-secondary);font-size:13px;">Your accepted friends will appear here.</p>';
+        return;
+    }
     container.innerHTML = members.map(m => `
         <div class="online-item" onclick="openChat('${m.id}')">
             <div class="online-avatar-wrap">
@@ -1877,14 +1996,22 @@ function renderContacts() {
     `).join('');
 }
 
-// Multi-Turn Context-Aware AI Chat Engine
 const activeChats = {};
+const chatPollers = {};
 
-function openChat(userId) {
+async function openChat(userId) {
     closeAllPopovers();
+    if (!currentAccount) {
+        openCreateUserModal();
+        return;
+    }
     const members = getAllMembers();
-    const member = members.find(m => m.id === userId) || members[0];
-    if (!member) return;
+    const member = members.find(m => m.id === String(userId));
+    if (!member) {
+        toast('Add this person by username before starting a conversation.');
+        openFriendsModal();
+        return;
+    }
 
     if (activeChats[member.id]) {
         const inp = document.getElementById(`chatInp-${member.id}`);
@@ -1892,22 +2019,16 @@ function openChat(userId) {
         return;
     }
 
+    let conversation;
+    try {
+        conversation = await accountApi('messages', { query: `&user_id=${encodeURIComponent(member.id)}` });
+    } catch (error) {
+        toast(error.message);
+        return;
+    }
+
     activeChats[member.id] = true;
     const dock = document.getElementById('chatDock');
-
-    // Retrieve previous chat history
-    let history = [];
-    try {
-        const stored = localStorage.getItem(CHATS_PREFIX + member.id);
-        if (stored) history = JSON.parse(stored);
-    } catch(e) {}
-
-    if (history.length === 0) {
-        history = [
-            { from: 'them', text: `Hey there! How's your day going? Great to connect with you! 👋` }
-        ];
-        localStorage.setItem(CHATS_PREFIX + member.id, JSON.stringify(history));
-    }
 
     const chatDiv = document.createElement('div');
     chatDiv.className = 'chat-window';
@@ -1918,7 +2039,7 @@ function openChat(userId) {
                 <img class="chat-user-pic" src="${member.avatar}" alt="${escapeHtml(member.name)}">
                 <div>
                     <strong>${escapeHtml(member.name)}</strong>
-                    <small>Active Now</small>
+                    <small>@${escapeHtml(member.username)}</small>
                 </div>
             </div>
             <div class="chat-controls">
@@ -1926,14 +2047,7 @@ function openChat(userId) {
             </div>
         </div>
         <div class="chat-messages" id="msgs-${member.id}">
-            ${history.map(msg => `
-                <div class="msg ${msg.from === 'me' ? 'msg-me' : 'msg-them'}">${escapeHtml(msg.text)}</div>
-            `).join('')}
-            <div class="typing-bubble" id="typing-${member.id}">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            </div>
+            ${renderMessageItems(conversation.messages || [])}
         </div>
         <div class="chat-input-bar">
             <input type="text" id="chatInp-${member.id}" placeholder="Message ${escapeHtml(member.name.split(' ')[0])}..." onkeydown="if(event.key==='Enter') sendChatMessage('${member.id}')">
@@ -1944,66 +2058,54 @@ function openChat(userId) {
     `;
 
     dock.appendChild(chatDiv);
+    await renderNotificationsPopover();
     const msgsContainer = document.getElementById(`msgs-${member.id}`);
     msgsContainer.scrollTop = msgsContainer.scrollHeight;
+    chatPollers[member.id] = setInterval(() => refreshChatMessages(member.id), 5000);
     setTimeout(() => {
         const inp = document.getElementById(`chatInp-${member.id}`);
         if (inp) inp.focus();
     }, 100);
 }
 
-function sendChatMessage(userId) {
+function renderMessageItems(messages) {
+    return messages.map(message => `
+        <div class="msg ${Number(message.sender_id) === Number(currentAccount.id) ? 'msg-me' : 'msg-them'}">${escapeHtml(message.content)}</div>
+    `).join('');
+}
+
+async function refreshChatMessages(userId) {
+    try {
+        const result = await accountApi('messages', { query: `&user_id=${encodeURIComponent(userId)}` });
+        const container = document.getElementById(`msgs-${userId}`);
+        if (container) {
+            container.innerHTML = renderMessageItems(result.messages || []);
+            container.scrollTop = container.scrollHeight;
+        }
+    } catch (error) {
+        closeChat(userId);
+        toast(error.message);
+    }
+}
+
+async function sendChatMessage(userId) {
     const inp = document.getElementById(`chatInp-${userId}`);
     if (!inp) return;
     const text = inp.value.trim();
     if (!text) return;
-
-    const members = getAllMembers();
-    const member = members.find(m => m.id === userId);
-    if (!member) return;
-
-    const msgsContainer = document.getElementById(`msgs-${userId}`);
-    const typingBubble = document.getElementById(`typing-${userId}`);
-
-    // Append user message
-    const myMsg = document.createElement('div');
-    myMsg.className = 'msg msg-me';
-    myMsg.textContent = text;
-    msgsContainer.insertBefore(myMsg, typingBubble);
-    inp.value = '';
-    msgsContainer.scrollTop = msgsContainer.scrollHeight;
-
-    // Save to history
-    let history = [];
     try {
-        history = JSON.parse(localStorage.getItem(CHATS_PREFIX + userId)) || [];
-    } catch(e) {}
-    history.push({ from: 'me', text: text });
-    localStorage.setItem(CHATS_PREFIX + userId, JSON.stringify(history));
-
-    // Show AI typing indicator
-    typingBubble.style.display = 'flex';
-    msgsContainer.scrollTop = msgsContainer.scrollHeight;
-
-    // Generate intelligent personality-driven AI reply
-    const replyDelay = Math.min(2200, Math.max(900, text.length * 40));
-    setTimeout(() => {
-        typingBubble.style.display = 'none';
-        const replyText = generateAIReply(member, text, history);
-
-        const themMsg = document.createElement('div');
-        themMsg.className = 'msg msg-them';
-        themMsg.textContent = replyText;
-        msgsContainer.insertBefore(themMsg, typingBubble);
-        msgsContainer.scrollTop = msgsContainer.scrollHeight;
-
-        history.push({ from: 'them', text: replyText });
-        localStorage.setItem(CHATS_PREFIX + userId, JSON.stringify(history));
-    }, replyDelay);
+        await accountApi('message', { method: 'POST', body: { user_id: Number(userId), content: text } });
+        inp.value = '';
+        await refreshChatMessages(userId);
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 function closeChat(userId) {
     delete activeChats[userId];
+    if (chatPollers[userId]) clearInterval(chatPollers[userId]);
+    delete chatPollers[userId];
     const el = document.getElementById(`chatBox-${userId}`);
     if (el) el.remove();
 }
@@ -2069,190 +2171,160 @@ function generateAIReply(person, userMessage, conversationHistory) {
     return fallbacks[Math.floor(Math.random() * fallbacks.length)];
 }
 
-// ==================== REAL-TIME PROFILE CREATION (DATABASE & LOCAL) ====================
-let selectedPresetAvatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
+// ==================== ACCOUNT ACCESS ====================
+let accountMode = 'register';
 
 function openCreateUserModal() {
     closeAllPopovers();
-    document.getElementById('newUserName').value = '';
-    document.getElementById('newUserRole').value = '';
-    document.getElementById('newUserBio').value = '';
-    document.getElementById('newUserLocation').value = '';
+    if (currentAccount) {
+        openFriendsModal();
+        return;
+    }
+    accountMode = 'register';
+    updateAccountForm();
     openModal('createUserModal');
 }
 
-function selectPresetAvatar(imgEl) {
-    document.querySelectorAll('.preset-pic').forEach(el => el.style.border = 'none');
-    imgEl.style.border = '3px solid var(--primary)';
-    selectedPresetAvatarUrl = imgEl.src;
+function toggleAccountMode() {
+    accountMode = accountMode === 'register' ? 'login' : 'register';
+    updateAccountForm();
 }
 
-function handleCustomAvatarUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-        selectedPresetAvatarUrl = ev.target.result;
-        toast('Custom avatar selected! 📸');
-    };
-    reader.readAsDataURL(file);
+function updateAccountForm() {
+    const registering = accountMode === 'register';
+    document.getElementById('accountModalTitle').textContent = registering ? 'Create your account' : 'Sign in';
+    document.getElementById('accountNameField').style.display = registering ? '' : 'none';
+    document.getElementById('accountEmail').parentElement.style.display = registering ? '' : 'none';
+    document.getElementById('accountUsername').previousElementSibling.textContent = registering ? 'Username' : 'Username or email';
+    document.getElementById('accountUsername').placeholder = registering ? 'letters, numbers, underscores' : 'Your username or email';
+    document.getElementById('accountPassword').autocomplete = registering ? 'new-password' : 'current-password';
+    document.getElementById('accountPassword').placeholder = registering ? 'At least 8 characters' : 'Your password';
+    document.getElementById('accountSubmitButton').textContent = registering ? 'Create account' : 'Sign in';
+    document.getElementById('accountModeButton').textContent = registering ? 'Already have an account? Sign in' : 'New here? Create an account';
+    document.getElementById('accountError').textContent = '';
 }
 
-function submitNewProfileToDatabase() {
-    const name = document.getElementById('newUserName').value.trim();
-    const role = document.getElementById('newUserRole').value.trim();
-    const bio = document.getElementById('newUserBio').value.trim();
-    const location = document.getElementById('newUserLocation').value.trim() || 'Cairo, Egypt';
-
-    if (!name || !role) {
-        toast('Please enter both Name and Role! ✍️');
-        return;
-    }
-
-    const newId = 'usr_' + Date.now();
-    const newPerson = {
-        id: newId,
-        name: name,
-        role: role,
-        avatar: selectedPresetAvatarUrl,
-        bio: bio || `Passionate about ${role} and building great software.`,
-        location: location,
-        mutual: 1,
-        status: "Active Now",
-        personality: `enthusiastic ${role} who loves connecting and collaborating with developers.`
+async function submitAccountForm() {
+    const registering = accountMode === 'register';
+    const body = registering ? {
+        display_name: document.getElementById('accountDisplayName').value.trim(),
+        username: document.getElementById('accountUsername').value.trim(),
+        email: document.getElementById('accountEmail').value.trim(),
+        password: document.getElementById('accountPassword').value
+    } : {
+        identifier: document.getElementById('accountUsername').value.trim(),
+        password: document.getElementById('accountPassword').value
     };
-
-    // 1. Save to localStorage immediately
-    const members = getAllMembers();
-    members.unshift(newPerson);
-    saveAllMembers(members);
-
-    // 2. Also send asynchronous POST to PHP backend (without blocking UI or requiring reload)
+    const errorElement = document.getElementById('accountError');
+    errorElement.textContent = '';
     try {
-        fetch('php/profile.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                display_name: name,
-                work: role,
-                bio: bio,
-                location: location,
-                avatar: selectedPresetAvatarUrl
-            })
-        }).catch(() => {});
-    } catch(e) {}
+        await accountApi(registering ? 'register' : 'login', { method: 'POST', body });
+        closeModal('createUserModal');
+        location.reload();
+    } catch (error) {
+        errorElement.textContent = error.message;
+    }
+}
 
-    closeModal('createUserModal');
+async function logoutAccount() {
+    try {
+        await accountApi('logout', { method: 'POST' });
+        currentAccount = null;
+        databaseFriends = [];
+        localStorage.removeItem(USERS_KEY);
+        location.reload();
+    } catch (error) {
+        toast(error.message);
+    }
+}
 
-    // 3. Update all UI components immediately without page reload!
-    renderContacts();
-    updateProfileUI();
-
-    // 4. Send a notification that a new person joined
-    const notifs = getNotifications();
-    notifs.unshift({
-        id: Date.now(),
-        type: "new_member",
-        userId: newId,
-        userName: name,
-        avatar: selectedPresetAvatarUrl,
-        text: `joined Connectify! Click to say hi 👋`,
-        time: "Just now",
-        read: false
-    });
-    saveNotifications(notifs);
-    renderNotificationsPopover();
-    updateBadges();
-
-    // 5. Open AI chat with the new person immediately
-    toast(`🎉 ${name} profile saved to database! Opening chat...`);
-    setTimeout(() => {
-        openChat(newId);
-    }, 600);
+function handleAccountAction() {
+    if (currentAccount) logoutAccount();
+    else openCreateUserModal();
 }
 
 // ==================== NOTIFICATIONS & MESSAGES POPOVERS ====================
-function renderNotificationsPopover() {
-    const notifs = getNotifications();
+async function renderNotificationsPopover() {
     const list = document.getElementById('notifList');
     if (!list) return;
-
-    if (notifs.length === 0) {
+    if (!currentAccount) {
+        currentNotifications = [];
+        list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-secondary);font-size:14px;">Sign in to receive notifications.</div>';
+        updateBadges();
+        return;
+    }
+    try {
+        const result = await accountApi('notifications');
+        currentNotifications = result.notifications || [];
+    } catch (error) {
+        list.innerHTML = `<div style="padding:18px;color:var(--text-secondary);">${escapeHtml(error.message)}</div>`;
+        return;
+    }
+    updateBadges();
+    if (currentNotifications.length === 0) {
         list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-secondary);font-size:14px;">No notifications right now</div>`;
         return;
     }
 
-    list.innerHTML = notifs.map(n => `
-        <div class="popover-item ${n.read ? '' : 'unread'}" onclick="handleNotificationClick(${n.id}, '${n.userId}', ${n.postId || 'null'})">
-            <img class="popover-avatar" src="${n.avatar}" alt="${escapeHtml(n.userName)}">
+    list.innerHTML = currentNotifications.map(notification => `
+        <div class="popover-item unread" onclick="handleNotificationClick('${notification.type}', ${Number(notification.user_id)})">
+            <img class="popover-avatar" src="${escapeHtml(notification.avatar || DEFAULT_AVATAR)}" alt="${escapeHtml(notification.display_name)}">
             <div class="popover-info">
-                <strong>${escapeHtml(n.userName)}</strong>
-                <span>${escapeHtml(n.text)} · ${n.time}</span>
+                <strong>${escapeHtml(notification.display_name)}</strong>
+                <span>${escapeHtml(notification.text)} · @${escapeHtml(notification.username)}</span>
             </div>
-            ${n.read ? '' : '<div class="unread-dot"></div>'}
+            <div class="unread-dot"></div>
         </div>
     `).join('');
 }
 
-function handleNotificationClick(notifId, userId, postId) {
-    const notifs = getNotifications();
-    const n = notifs.find(x => x.id === notifId);
-    if (n) {
-        n.read = true;
-        saveNotifications(notifs);
-        renderNotificationsPopover();
-        updateBadges();
-    }
-
+async function handleNotificationClick(type, userId) {
     closeAllPopovers();
-
-    if (postId) {
-        const targetEl = document.getElementById(`post-${postId}`);
-        if (targetEl) {
-            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            targetEl.style.transition = 'box-shadow 0.4s';
-            targetEl.style.boxShadow = '0 0 0 3px var(--primary)';
-            setTimeout(() => targetEl.style.boxShadow = '', 2000);
+    try {
+        if (type === 'friend') {
+            await accountApi('mark_read', { method: 'POST', body: { sender_id: userId } });
+            await renderNotificationsPopover();
+            await openFriendsModal();
             return;
         }
-    }
-
-    if (userId) {
-        openChat(userId);
+        if (type === 'message') {
+            await accountApi('mark_read', { method: 'POST', body: { sender_id: userId } });
+            await renderNotificationsPopover();
+            await openChat(String(userId));
+        }
+    } catch (error) {
+        toast(error.message);
     }
 }
 
-function markAllNotificationsRead() {
-    const notifs = getNotifications();
-    notifs.forEach(n => n.read = true);
-    saveNotifications(notifs);
-    renderNotificationsPopover();
-    updateBadges();
-    toast('All notifications marked as read! ✔️');
+async function markAllNotificationsRead() {
+    try {
+        await accountApi('mark_read', { method: 'POST' });
+        await renderNotificationsPopover();
+        toast('Notifications marked as read.');
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 function renderMessagesPopover() {
     const members = getAllMembers();
     const list = document.getElementById('messagesList');
     if (!list) return;
-
-    list.innerHTML = members.slice(0, 5).map(m => {
-        let lastMsg = "Hey! How are you doing today? 👋";
-        try {
-            const h = JSON.parse(localStorage.getItem(CHATS_PREFIX + m.id));
-            if (h && h.length > 0) lastMsg = h[h.length - 1].text;
-        } catch(e) {}
-
-        return `
-            <div class="popover-item" onclick="openChat('${m.id}')">
-                <img class="popover-avatar" src="${m.avatar}" alt="${escapeHtml(m.name)}">
-                <div class="popover-info">
-                    <strong>${escapeHtml(m.name)}</strong>
-                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px;">${escapeHtml(lastMsg)}</span>
-                </div>
-            </div>
-        `;
-    }).join('');
+    if (!currentAccount) {
+        list.innerHTML = '<div style="padding:18px;color:var(--text-secondary);">Sign in to message your friends.</div>';
+        return;
+    }
+    if (!members.length) {
+        list.innerHTML = '<div style="padding:18px;color:var(--text-secondary);">Add a friend to start a conversation.</div>';
+        return;
+    }
+    list.innerHTML = members.slice(0, 10).map(member => `
+        <div class="popover-item" onclick="openChat('${member.id}')">
+            <img class="popover-avatar" src="${escapeHtml(member.avatar)}" alt="${escapeHtml(member.name)}">
+            <div class="popover-info"><strong>${escapeHtml(member.name)}</strong><span>@${escapeHtml(member.username)}</span></div>
+        </div>
+    `).join('');
 }
 
 // ==================== STORIES ====================
@@ -2488,22 +2560,22 @@ function renderSinglePost(p, isSaved) {
 }
 
 // Post Actions
-function togglePostLike(id) {
+async function togglePostLike(id) {
+    if (!requireSignedIn()) return;
     const posts = getPosts();
     const p = posts.find(x => x.id === id);
     if (!p) return;
 
-    p.liked = !p.liked;
-    if (p.liked) {
-        p.likes = (p.likes || 0) + 1;
-        p.reaction = 'like';
-        toast('Post liked! 👍');
-    } else {
-        p.likes = Math.max(0, (p.likes || 1) - 1);
-        p.reaction = null;
+    try {
+        const result = await postsApi('likes', { method: 'POST', body: { post_id: id } });
+        p.liked = result.liked;
+        p.likes = result.likes_count;
+        p.reaction = p.liked ? 'like' : null;
+        renderFeed();
+        if (p.liked) toast('Post liked! 👍');
+    } catch (error) {
+        toast(error.message);
     }
-    savePosts(posts);
-    renderFeed();
 }
 
 function showReactionsBox(id) {
@@ -2512,16 +2584,23 @@ function showReactionsBox(id) {
     if (box) box.classList.add('show');
 }
 
-function selectReaction(id, type, label) {
+async function selectReaction(id, type, label) {
     const posts = getPosts();
     const p = posts.find(x => x.id === id);
     if (!p) return;
-    if (!p.liked) p.likes = (p.likes || 0) + 1;
-    p.liked = true;
-    p.reaction = type;
-    savePosts(posts);
-    renderFeed();
-    toast(`Reacted with ${label}!`);
+    if (!requireSignedIn()) return;
+    try {
+        if (!p.liked) {
+            const result = await postsApi('likes', { method: 'POST', body: { post_id: id } });
+            p.liked = result.liked;
+            p.likes = result.likes_count;
+        }
+        p.reaction = type;
+        renderFeed();
+        toast(`Reacted with ${label}!`);
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 function togglePostComments(id) {
@@ -2539,31 +2618,23 @@ function togglePostComments(id) {
     }
 }
 
-function submitComment(postId) {
+async function submitComment(postId) {
+    if (!requireSignedIn()) return;
     const inp = document.getElementById(`commentInp-${postId}`);
     if (!inp) return;
     const text = inp.value.trim();
     if (!text) return;
 
-    const posts = getPosts();
-    const p = posts.find(x => x.id === postId);
-    if (!p) return;
-
-    const me = getProfile();
-    p.comments = p.comments || [];
-    p.comments.push({
-        id: Date.now(),
-        author: me.name,
-        avatar: me.avatar,
-        text: text,
-        time: "Just now",
-        liked: false
-    });
-    p.showComments = true;
-    savePosts(posts);
-    inp.value = '';
-    renderFeed();
-    toast('Comment added! 💬');
+    try {
+        await postsApi('comments', { method: 'POST', body: { post_id: postId, content: text } });
+        await refreshDatabasePosts();
+        const post = databasePosts.find(item => item.id === postId);
+        if (post) post.showComments = true;
+        renderFeed();
+        toast('Comment added! 💬');
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 function toggleCommentLike(postId, commentId) {
@@ -2609,13 +2680,18 @@ function toggleSavePost(id) {
     renderFeed();
 }
 
-function deletePost(id) {
+async function deletePost(id) {
+    if (!requireSignedIn()) return;
     if (!confirm('Are you sure you want to delete this post?')) return;
-    let posts = getPosts().filter(p => p.id !== id);
-    savePosts(posts);
-    renderFeed();
-    updateProfileUI();
-    toast('Post deleted 🗑️');
+    try {
+        await postsApi('posts', { method: 'DELETE', body: { post_id: id } });
+        databasePosts = getPosts().filter(p => p.id !== id);
+        renderFeed();
+        updateProfileUI();
+        toast('Post deleted 🗑️');
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 function sharePost(id) {
@@ -2729,43 +2805,32 @@ function insertPostEmoji() {
     togglePostSubmitBtn();
 }
 
-function submitNewPost() {
+async function submitNewPost() {
+    if (!requireSignedIn()) return;
     const text = document.getElementById('postContentInput').value.trim();
     if (!text && !uploadedPostImage) return;
-
-    const me = getProfile();
-    const posts = getPosts();
 
     let postText = text;
     if (activeFeeling) {
         postText = `${text} — is feeling ${activeFeeling.emoji} ${activeFeeling.label}`;
     }
 
-    const newPost = {
-        id: Date.now(),
-        author: me.name,
-        avatar: me.avatar,
-        time: "Just now",
-        text: postText,
-        image: uploadedPostImage,
-        likes: 0,
-        liked: false,
-        reaction: null,
-        comments: [],
-        shares: 0,
-        showComments: false,
-        isOwn: true
-    };
-
-    posts.unshift(newPost);
-    savePosts(posts);
-    closeModal('createPostModal');
-    activeFeeling = null;
-    const badge = document.getElementById('modalFeelingBadge');
-    if (badge) badge.style.display = 'none';
-    renderFeed();
-    updateProfileUI();
-    toast('Your post has been published to Connectify! 🎉');
+    try {
+        await postsApi('posts', {
+            method: 'POST',
+            body: { content: postText, image: uploadedPostImage }
+        });
+        await refreshDatabasePosts();
+        closeModal('createPostModal');
+        activeFeeling = null;
+        const badge = document.getElementById('modalFeelingBadge');
+        if (badge) badge.style.display = 'none';
+        renderFeed();
+        updateProfileUI();
+        toast('Your post has been published to Connectify! 🎉');
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 // ==================== FEELING MODAL ====================
@@ -2840,22 +2905,105 @@ function toggleGroupJoin(btn) {
     }
 }
 
-function openFriendsModal() {
-    const members = getAllMembers();
-    const container = document.getElementById('friendsModalList');
-    container.innerHTML = members.map(m => `
-        <div class="popover-item" style="border-radius:12px;margin-bottom:8px;border:1px solid var(--border-light);">
-            <img class="popover-avatar" src="${m.avatar}" alt="${escapeHtml(m.name)}">
-            <div class="popover-info">
-                <strong>${escapeHtml(m.name)}</strong>
-                <span>${escapeHtml(m.role || 'Member')} · ${m.location || 'Cairo'}</span>
-            </div>
-            <div style="display:flex;gap:6px;">
-                <button class="btn-post" style="width:auto;padding:6px 14px;font-size:12.5px;" onclick="closeModal('friendsModal'); openChat('${m.id}')">Chat</button>
-            </div>
-        </div>
-    `).join('');
+async function openFriendsModal() {
+    if (!currentAccount) {
+        openCreateUserModal();
+        return;
+    }
+    document.getElementById('memberSearchInput').value = '';
+    document.getElementById('memberSearchResults').innerHTML = '';
+    await refreshFriendsList();
     openModal('friendsModal');
+}
+
+async function refreshFriendsList() {
+    const container = document.getElementById('friendsModalList');
+    try {
+        const result = await accountApi('friends');
+        databaseFriends = result.friends || [];
+        saveAllMembers(databaseFriends.filter(friend => friend.friendship_status === 'accepted').map(toMember));
+        renderContacts();
+        updateProfileUI();
+        if (!databaseFriends.length) {
+            container.innerHTML = '<p style="padding:12px;color:var(--text-secondary);">No friends yet. Search by username above to find people.</p>';
+            return;
+        }
+        container.innerHTML = '<h4 style="margin:18px 0 8px;">Friends and requests</h4>' + databaseFriends.map(friend => {
+            const member = toMember(friend);
+            const accepted = friend.friendship_status === 'accepted';
+            const incoming = friend.request_direction === 'incoming';
+            const action = accepted
+                ? `<button class="btn-post" style="width:auto;padding:6px 14px;font-size:12.5px;" onclick="closeModal('friendsModal');openChat('${member.id}')">Message</button>`
+                : incoming
+                    ? `<button class="btn-post" style="width:auto;padding:6px 14px;font-size:12.5px;" onclick="respondToFriendRequest(${Number(friend.id)})">Accept</button>`
+                    : '<span style="font-size:12px;color:var(--text-secondary);">Request sent</span>';
+            return `<div class="popover-item" style="border-radius:8px;margin-bottom:8px;border:1px solid var(--border-light);">
+                <img class="popover-avatar" src="${escapeHtml(member.avatar)}" alt="${escapeHtml(member.name)}">
+                <div class="popover-info"><strong>${escapeHtml(member.name)}</strong><span>@${escapeHtml(member.username)}${accepted ? '' : incoming ? ' · Wants to connect' : ' · Pending'}</span></div>
+                ${action}
+            </div>`;
+        }).join('');
+    } catch (error) {
+        container.textContent = error.message;
+    }
+}
+
+let memberSearchSequence = 0;
+async function searchMembers(query) {
+    const results = document.getElementById('memberSearchResults');
+    const term = query.trim();
+    const sequence = ++memberSearchSequence;
+    if (term.length < 2) {
+        results.innerHTML = '';
+        return;
+    }
+    try {
+        const result = await accountApi('search', { query: `&q=${encodeURIComponent(term)}` });
+        if (sequence !== memberSearchSequence) return;
+        const users = result.users || [];
+        if (!users.length) {
+            results.innerHTML = '<p style="padding:8px 0;color:var(--text-secondary);">No matching users.</p>';
+            return;
+        }
+        results.innerHTML = users.map(user => {
+            const member = toMember(user);
+            let action = `<button class="btn-post" style="width:auto;padding:6px 14px;font-size:12.5px;" onclick="sendFriendRequest(${Number(user.id)})">Add friend</button>`;
+            if (user.friendship_status === 'accepted') {
+                action = `<button class="btn-post" style="width:auto;padding:6px 14px;font-size:12.5px;" onclick="closeModal('friendsModal');openChat('${member.id}')">Message</button>`;
+            } else if (user.friendship_status === 'pending' && user.request_direction === 'incoming') {
+                action = `<button class="btn-post" style="width:auto;padding:6px 14px;font-size:12.5px;" onclick="respondToFriendRequest(${Number(user.id)})">Accept</button>`;
+            } else if (user.friendship_status === 'pending') {
+                action = '<span style="font-size:12px;color:var(--text-secondary);">Request sent</span>';
+            }
+            return `<div class="popover-item" style="border-radius:8px;margin-bottom:8px;border:1px solid var(--border-light);">
+                <img class="popover-avatar" src="${escapeHtml(member.avatar)}" alt="${escapeHtml(member.name)}">
+                <div class="popover-info"><strong>${escapeHtml(member.name)}</strong><span>@${escapeHtml(member.username)}</span></div>
+                ${action}
+            </div>`;
+        }).join('');
+    } catch (error) {
+        if (sequence === memberSearchSequence) results.textContent = error.message;
+    }
+}
+
+async function sendFriendRequest(userId) {
+    try {
+        await accountApi('request', { method: 'POST', body: { user_id: userId } });
+        toast('Friend request sent.');
+        await Promise.all([refreshFriendsList(), searchMembers(document.getElementById('memberSearchInput').value)]);
+    } catch (error) {
+        toast(error.message);
+    }
+}
+
+async function respondToFriendRequest(userId) {
+    try {
+        await accountApi('accept', { method: 'POST', body: { user_id: userId } });
+        toast('Friend request accepted. You can message each other now.');
+        await Promise.all([refreshFriendsList(), searchMembers(document.getElementById('memberSearchInput').value)]);
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 function openSavedModal() {
@@ -2892,11 +3040,15 @@ function openLightbox(src) {
 }
 
 // ==================== POPOVER & MODAL UTILITIES ====================
-function togglePopover(id) {
+function toggleAppPopover(id) {
     const pop = document.getElementById(id);
     const isOpen = pop.classList.contains('open');
     closeAllPopovers();
-    if (!isOpen) pop.classList.add('open');
+    if (!isOpen) {
+        pop.classList.add('open');
+        if (id === 'notifPopover') renderNotificationsPopover();
+        if (id === 'messagesPopover') renderMessagesPopover();
+    }
 }
 
 function closeAllPopovers() {

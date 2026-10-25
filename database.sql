@@ -60,6 +60,36 @@ CREATE TABLE IF NOT EXISTS comments (
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Friend requests and accepted friendships
+CREATE TABLE IF NOT EXISTS friendships (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_low INT NOT NULL,
+    user_high INT NOT NULL,
+    requester_id INT NOT NULL,
+    addressee_id INT NOT NULL,
+    status ENUM('pending', 'accepted') NOT NULL DEFAULT 'pending',
+    seen_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_friendship (user_low, user_high),
+    FOREIGN KEY (user_low) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_high) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Direct messages are only exposed to accepted friends by the API
+CREATE TABLE IF NOT EXISTS messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    content TEXT NOT NULL,
+    read_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX conversation_lookup (sender_id, receiver_id, id),
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- Insert sample user
 INSERT INTO users (username, email, password, display_name, bio, work, education, location)
 VALUES ('user1', 'user@example.com', '$2y$10$samplehashedpassword', 'User Name', 

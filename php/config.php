@@ -27,8 +27,9 @@ function getConnection() {
         );
         return $conn;
     } catch (PDOException $e) {
+        error_log('Database connection failed: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]);
+        echo json_encode(['error' => 'Database connection failed. Check the server configuration.']);
         exit;
     }
 }
@@ -85,8 +86,63 @@ function initDatabase() {
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
     )");
+
+    $conn->exec("CREATE TABLE IF NOT EXISTS friendships (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_low INT NOT NULL,
+        user_high INT NOT NULL,
+        requester_id INT NOT NULL,
+        addressee_id INT NOT NULL,
+        status ENUM('pending', 'accepted') NOT NULL DEFAULT 'pending',
+        seen_at TIMESTAMP NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_friendship (user_low, user_high),
+        FOREIGN KEY (user_low) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_high) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+
+    $conn->exec("CREATE TABLE IF NOT EXISTS messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sender_id INT NOT NULL,
+        receiver_id INT NOT NULL,
+        content TEXT NOT NULL,
+        read_at TIMESTAMP NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX conversation_lookup (sender_id, receiver_id, id),
+        FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+
+    if (!$conn->query("SHOW COLUMNS FROM friendships LIKE 'seen_at'")->fetch()) {
+        $conn->exec('ALTER TABLE friendships ADD seen_at TIMESTAMP NULL DEFAULT NULL');
+    }
+    if (!$conn->query("SHOW COLUMNS FROM messages LIKE 'read_at'")->fetch()) {
+        $conn->exec('ALTER TABLE messages ADD read_at TIMESTAMP NULL DEFAULT NULL');
+    }
     
     return $conn;
+}
+
+function startAppSession() {
+    if (session_status() === PHP_SESSION_NONE) {
+        $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        session_set_cookie_params([
+            'httponly' => true,
+            'secure' => $isHttps,
+            'samesite' => 'Lax'
+        ]);
+        session_start();
+    }
+}
+
+function requireAuthenticatedUser() {
+    startAppSession();
+    if (empty($_SESSION['user_id'])) {
+        jsonResponse(['error' => 'Please sign in to continue.'], 401);
+    }
+    return (int)$_SESSION['user_id'];
 }
 
 // CORS Headers for API
@@ -104,4 +160,3 @@ function jsonResponse($data, $statusCode = 200) {
     exit;
 }
 ?>
-

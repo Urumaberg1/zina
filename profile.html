@@ -690,9 +690,9 @@ input, textarea, select { font-family: inherit; outline: none; }
     <div class="cover-photo" id="coverPhoto">
         <button class="cover-edit-btn" onclick="openCoverModal()">
             <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
-            Edit Cover Photo
+            <span id="coverEditLabel">Add Banner Photo</span>
         </button>
-        <input type="file" id="coverFileInput" style="display:none" accept="image/*">
+        <input type="file" id="coverFileInput" style="display:none" accept="image/jpeg,image/png,image/webp,image/gif">
     </div>
 </div>
 
@@ -1000,7 +1000,7 @@ input, textarea, select { font-family: inherit; outline: none; }
     </div>
 </div>
 
-<!-- ========== FLOATING AI CHAT DOCK ========== -->
+<!-- ========== MESSENGER LINK TARGET ========== -->
 <div class="chat-dock" id="chatDock"></div>
 
 <!-- ========== TOAST NOTIFICATION ========== -->
@@ -1015,7 +1015,58 @@ const PROFILE_KEY = 'socialvibe_profile';
 const USERS_KEY = 'socialvibe_users';
 const COVER_KEY = 'socialvibe_cover';
 const THEME_KEY = 'connectify_theme';
-const CHATS_PREFIX = 'connectify_chat_';
+const ACCOUNT_API = 'php/account.php';
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+let profileAccount = null;
+let databasePosts = [];
+
+async function profileApi(endpoint, options = {}) {
+    const method = options.method || 'GET';
+    const response = await fetch(`php/${endpoint}.php${options.query || ''}`, {
+        method,
+        credentials: 'same-origin',
+        headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' },
+        body: method === 'GET' ? undefined : JSON.stringify(options.body || {})
+    });
+    let result;
+    try {
+        result = await response.json();
+    } catch (error) {
+        throw new Error('Connectify could not read the response from its PHP service.');
+    }
+    if (!response.ok) throw new Error(result.error || 'The request could not be completed.');
+    return result;
+}
+
+function mapProfilePost(post) {
+    return {
+        id: Number(post.id),
+        authorId: String(post.user_id),
+        author: post.author,
+        avatar: post.author_avatar || DEFAULT_AVATAR,
+        text: post.content || '',
+        image: post.image || null,
+        time: new Date(post.created_at.replace(' ', 'T')).toLocaleString(),
+        likes: Number(post.likes_count || 0),
+        liked: Boolean(post.liked),
+        comments: (post.comments || []).map(comment => ({
+            id: Number(comment.id),
+            author: comment.author,
+            avatar: comment.author_avatar || DEFAULT_AVATAR,
+            text: comment.content,
+            time: new Date(comment.created_at.replace(' ', 'T')).toLocaleString()
+        })),
+        shares: 0,
+        showComments: false,
+        isOwn: true
+    };
+}
+
+async function refreshProfilePosts() {
+    const result = await profileApi('posts', { query: '?mine=1' });
+    databasePosts = (result.posts || []).map(mapProfilePost);
+    return databasePosts;
+}
 
 const DEFAULT_ME = {
     name: "User Name",
@@ -1079,21 +1130,47 @@ function getAllMembers() {
 }
 
 function getPosts() {
-    try {
-        const s = localStorage.getItem(POSTS_KEY);
-        if (s) return JSON.parse(s);
-    } catch(e) {}
-    return [];
+    return databasePosts;
 }
-function savePosts(p) { localStorage.setItem(POSTS_KEY, JSON.stringify(p)); }
+function savePosts(p) { databasePosts = p; }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
+    initCalc();
+    try {
+        const accountResult = await fetch(`${ACCOUNT_API}?action=me`, { credentials: 'same-origin' }).then(response => response.json());
+        profileAccount = accountResult.user;
+        if (!profileAccount) {
+            location.href = 'index.html?auth=1';
+            return;
+        }
+        const me = getProfile();
+        me.name = profileAccount.display_name;
+        me.username = profileAccount.username;
+        me.userId = profileAccount.id;
+        me.bio = profileAccount.bio || '';
+        me.avatar = profileAccount.avatar || DEFAULT_AVATAR;
+        me.work = profileAccount.work || '';
+        me.location = profileAccount.location || '';
+        saveProfile(me);
+        const friendsResult = await fetch(`${ACCOUNT_API}?action=friends`, { credentials: 'same-origin' }).then(response => response.json());
+        const friends = (friendsResult.friends || []).filter(friend => friend.friendship_status === 'accepted').map(friend => ({
+            id: String(friend.id),
+            username: friend.username,
+            name: friend.display_name,
+            role: friend.work || 'Connectify member',
+            avatar: friend.avatar || DEFAULT_AVATAR,
+            location: friend.location || ''
+        }));
+        localStorage.setItem(USERS_KEY, JSON.stringify(friends));
+        await refreshProfilePosts();
+    } catch (error) {
+        toast('Could not load your account. Please return to Connectify and try again.');
+    }
     updateUI();
     renderSideGrids();
     renderUserPosts();
     renderGallery();
-    initCalc();
 });
 
 function updateUI() {
@@ -1123,13 +1200,17 @@ function updateUI() {
     document.getElementById('sideFriendsCount').textContent = members.length;
     document.getElementById('friendsTabCount').textContent = members.length;
 
-    const cover = localStorage.getItem(COVER_KEY);
+    const cover = (profileAccount && profileAccount.cover_photo) || localStorage.getItem(COVER_KEY);
     if (cover) {
-        if (cover.startsWith('data:') || cover.startsWith('http')) {
+        if (cover.startsWith('data:') || cover.startsWith('http') || cover.startsWith('php/uploads/')) {
             document.getElementById('coverPhoto').style.backgroundImage = `url('${cover}')`;
         } else {
             document.getElementById('coverPhoto').style.background = cover;
         }
+        document.getElementById('coverEditLabel').textContent = 'Edit Banner Photo';
+    } else {
+        document.getElementById('coverPhoto').style.backgroundImage = '';
+        document.getElementById('coverEditLabel').textContent = 'Add Banner Photo';
     }
 }
 
@@ -1269,26 +1350,19 @@ function toggleProfileComments(id) {
     }
 }
 
-function submitProfileComment(id) {
+async function submitProfileComment(id) {
     const inp = document.getElementById(`profileCommentInp-${id}`);
     if (!inp || !inp.value.trim()) return;
     const text = inp.value.trim();
-    const me = getProfile();
-    const posts = getPosts();
-    const p = posts.find(x => x.id === id);
-    if (p) {
-        if (!p.comments) p.comments = [];
-        p.comments.push({
-            id: Date.now(),
-            author: me.name,
-            avatar: me.avatar,
-            text: text,
-            time: 'Just now'
-        });
-        p.showComments = true;
-        savePosts(posts);
+    try {
+        await profileApi('comments', { method: 'POST', body: { post_id: id, content: text } });
+        await refreshProfilePosts();
+        const post = databasePosts.find(item => item.id === id);
+        if (post) post.showComments = true;
         renderUserPosts();
         toast('Comment added to post! 💬');
+    } catch (error) {
+        toast(error.message);
     }
 }
 
@@ -1297,30 +1371,37 @@ function shareProfilePost(id) {
     const p = posts.find(x => x.id === id);
     if (p) {
         p.shares = (p.shares || 0) + 1;
-        savePosts(posts);
         renderUserPosts();
         toast('Post shared! 🚀');
     }
 }
 
-function toggleLike(id) {
+async function toggleLike(id) {
     const posts = getPosts();
     const p = posts.find(x => x.id === id);
     if (p) {
-        p.liked = !p.liked;
-        p.likes = (p.likes || 0) + (p.liked ? 1 : -1);
-        savePosts(posts);
-        renderUserPosts();
+        try {
+            const result = await profileApi('likes', { method: 'POST', body: { post_id: id } });
+            p.liked = result.liked;
+            p.likes = result.likes_count;
+            renderUserPosts();
+        } catch (error) {
+            toast(error.message);
+        }
     }
 }
 
-function deleteProfilePost(id) {
+async function deleteProfilePost(id) {
     if (!confirm('Delete this post?')) return;
-    const posts = getPosts().filter(x => x.id !== id);
-    savePosts(posts);
-    renderUserPosts();
-    updateUI();
-    toast('Post deleted 🗑️');
+    try {
+        await profileApi('posts', { method: 'DELETE', body: { post_id: id } });
+        databasePosts = getPosts().filter(x => x.id !== id);
+        renderUserPosts();
+        updateUI();
+        toast('Post deleted 🗑️');
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 // Modals
@@ -1335,58 +1416,87 @@ function openEditModal() {
     openModal('editModal');
 }
 
-function saveProfileChanges() {
+async function saveProfileChanges() {
     const me = getProfile();
-    me.name = document.getElementById('editName').value.trim() || me.name;
-    me.bio = document.getElementById('editBio').value.trim();
-    me.work = document.getElementById('editWork').value.trim();
-    me.education = document.getElementById('editEdu').value.trim();
-    me.location = document.getElementById('editLocation').value.trim();
-    me.relationship = document.getElementById('editRelationship').value;
-    saveProfile(me);
-    closeModal('editModal');
-    updateUI();
-    toast('Profile updated successfully! ✨');
+    const updated = {
+        ...me,
+        name: document.getElementById('editName').value.trim() || me.name,
+        bio: document.getElementById('editBio').value.trim(),
+        work: document.getElementById('editWork').value.trim(),
+        education: document.getElementById('editEdu').value.trim(),
+        location: document.getElementById('editLocation').value.trim(),
+        relationship: document.getElementById('editRelationship').value
+    };
+    try {
+        const response = await fetch('php/profile.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                display_name: updated.name,
+                bio: updated.bio,
+                avatar: updated.avatar,
+                work: updated.work,
+                education: updated.education,
+                location: updated.location
+            })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Could not save your profile.');
+        saveProfile(updated);
+        profileAccount = { ...profileAccount, ...result.user };
+        closeModal('editModal');
+        updateUI();
+        toast('Profile updated successfully! ✨');
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 function openCreateModal() { openModal('createPostModal'); }
 
-function submitProfilePost() {
+async function submitProfilePost() {
     const text = document.getElementById('postContentInput').value.trim();
     if (!text) return;
-    const me = getProfile();
-    const posts = getPosts();
-    posts.unshift({
-        id: Date.now(),
-        author: me.name,
-        avatar: me.avatar,
-        text: text,
-        time: "Just now",
-        likes: 0,
-        liked: false,
-        comments: [],
-        shares: 0,
-        isOwn: true
-    });
-    savePosts(posts);
-    closeModal('createPostModal');
-    document.getElementById('postContentInput').value = '';
-    renderUserPosts();
-    updateUI();
-    toast('Post shared! 🎉');
+    try {
+        await profileApi('posts', { method: 'POST', body: { content: text } });
+        await refreshProfilePosts();
+        closeModal('createPostModal');
+        document.getElementById('postContentInput').value = '';
+        renderUserPosts();
+        updateUI();
+        toast('Post shared! 🎉');
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 // Cover & Avatar Uploads
-document.getElementById('coverFileInput').addEventListener('change', function(e){
+document.getElementById('coverFileInput').addEventListener('change', async function(e){
     const file = e.target.files[0];
     if (!file) return;
-    const r = new FileReader();
-    r.onload = (ev) => {
-        localStorage.setItem(COVER_KEY, ev.target.result);
-        document.getElementById('coverPhoto').style.backgroundImage = `url('${ev.target.result}')`;
-        toast('Cover photo updated! 🎨');
-    };
-    r.readAsDataURL(file);
+    const formData = new FormData();
+    formData.append('cover_photo', file);
+    try {
+        const response = await fetch(`${ACCOUNT_API}?action=upload_cover`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: formData
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Could not upload the banner image.');
+        if (typeof result.cover_photo !== 'string' || !result.cover_photo) {
+            throw new Error('The server did not return the saved banner image.');
+        }
+        profileAccount.cover_photo = result.cover_photo;
+        localStorage.setItem(COVER_KEY, result.cover_photo);
+        updateUI();
+        toast('Banner photo updated!');
+    } catch (error) {
+        toast(error.message || 'Could not upload the banner image.');
+    } finally {
+        e.target.value = '';
+    }
 });
 
 document.getElementById('avatarFileInput').addEventListener('change', function(e){
@@ -1413,100 +1523,13 @@ function switchTab(t) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `panel-${t}`));
 }
 
-// AI Floating Chat
-const activeChats = {};
+// Open the authenticated messenger for an accepted friend.
 function openChat(userId) {
-    const members = getAllMembers();
-    const m = members.find(x => x.id === userId) || members[0];
-    if (!m) return;
-    if (activeChats[m.id]) return;
-    activeChats[m.id] = true;
-
-    let history = [];
-    try {
-        const stored = localStorage.getItem(CHATS_PREFIX + m.id);
-        if (stored) history = JSON.parse(stored);
-    } catch(e) {}
-    if (history.length === 0) {
-        history = [{ from: 'them', text: `Hey there! How's your day going? Great to connect with you! 👋` }];
+    if (!profileAccount) {
+        location.href = 'index.html?auth=1';
+        return;
     }
-
-    const dock = document.getElementById('chatDock');
-    const div = document.createElement('div');
-    div.className = 'chat-window';
-    div.id = `chatBox-${m.id}`;
-    div.innerHTML = `
-        <div class="chat-header">
-            <div class="chat-user">
-                <img class="chat-user-pic" src="${m.avatar}">
-                <div><strong>${escapeHtml(m.name)}</strong></div>
-            </div>
-            <button onclick="closeChat('${m.id}')">✕</button>
-        </div>
-        <div class="chat-messages" id="msgs-${m.id}">
-            ${history.map(msg => `
-                <div class="msg ${msg.from === 'me' ? 'msg-me' : 'msg-them'}">${escapeHtml(msg.text)}</div>
-            `).join('')}
-            <div class="typing-bubble" id="typing-${m.id}">
-                <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
-            </div>
-        </div>
-        <div class="chat-input-bar">
-            <input type="text" id="chatInp-${m.id}" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendChatMessage('${m.id}')">
-            <button class="btn-save" style="padding:4px 12px;font-size:12px;" onclick="sendChatMessage('${m.id}')">Send</button>
-        </div>
-    `;
-    dock.appendChild(div);
-}
-
-function sendChatMessage(userId) {
-    const inp = document.getElementById(`chatInp-${userId}`);
-    if (!inp || !inp.value.trim()) return;
-    const text = inp.value.trim();
-    const members = getAllMembers();
-    const m = members.find(x => x.id === userId);
-
-    const msgs = document.getElementById(`msgs-${userId}`);
-    const typing = document.getElementById(`typing-${userId}`);
-
-    const myMsg = document.createElement('div');
-    myMsg.className = 'msg msg-me';
-    myMsg.textContent = text;
-    msgs.insertBefore(myMsg, typing);
-    inp.value = '';
-    msgs.scrollTop = msgs.scrollHeight;
-
-    let history = [];
-    try { history = JSON.parse(localStorage.getItem(CHATS_PREFIX + userId)) || []; } catch(e){}
-    history.push({ from: 'me', text });
-    localStorage.setItem(CHATS_PREFIX + userId, JSON.stringify(history));
-
-    typing.style.display = 'flex';
-    msgs.scrollTop = msgs.scrollHeight;
-
-    setTimeout(() => {
-        typing.style.display = 'none';
-        const replies = [
-            "Totally agree with you! That's awesome 🙌",
-            "Great to talk with you! Let's build something cool together.",
-            "Haha, nice! What project are you working on right now? 💻",
-            "Sounds like a plan! Talk to you soon ✨"
-        ];
-        const rep = replies[Math.floor(Math.random() * replies.length)];
-        const themMsg = document.createElement('div');
-        themMsg.className = 'msg msg-them';
-        themMsg.textContent = rep;
-        msgs.insertBefore(themMsg, typing);
-        msgs.scrollTop = msgs.scrollHeight;
-        history.push({ from: 'them', text: rep });
-        localStorage.setItem(CHATS_PREFIX + userId, JSON.stringify(history));
-    }, 1200);
-}
-
-function closeChat(userId) {
-    delete activeChats[userId];
-    const el = document.getElementById(`chatBox-${userId}`);
-    if (el) el.remove();
+    location.href = `index.html?chat=${encodeURIComponent(userId)}`;
 }
 
 function openLightbox(src) {
