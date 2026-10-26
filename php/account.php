@@ -36,6 +36,7 @@ function publicUser($user) {
         'bio' => $user['bio'] ?? '',
         'avatar' => $user['avatar'] ?? '',
         'cover_photo' => $user['cover_photo'] ?? '',
+        'profile_effect' => $user['profile_effect'] ?? 'none',
         'work' => $user['work'] ?? '',
         'location' => $user['location'] ?? ''
     ];
@@ -112,7 +113,7 @@ try {
         $identifier = trim($data['identifier'] ?? '');
         $password = $data['password'] ?? '';
         $conn = initDatabase();
-        $stmt = $conn->prepare('SELECT id, username, email, password, display_name, bio, avatar, cover_photo, work, location FROM users WHERE username = ? OR email = ? LIMIT 1');
+        $stmt = $conn->prepare('SELECT id, username, email, password, display_name, bio, avatar, cover_photo, profile_effect, work, location FROM users WHERE username = ? OR email = ? LIMIT 1');
         $stmt->execute([$identifier, $identifier]);
         $user = $stmt->fetch();
         if (!$user || !password_verify($password, $user['password'])) {
@@ -136,7 +137,7 @@ try {
     if ($action === 'me' && $method === 'GET') {
         if (empty($_SESSION['user_id'])) accountResponse(['user' => null]);
         $conn = initDatabase();
-        $stmt = $conn->prepare('SELECT id, username, display_name, bio, avatar, cover_photo, work, location FROM users WHERE id = ?');
+        $stmt = $conn->prepare('SELECT id, username, display_name, bio, avatar, cover_photo, profile_effect, work, location FROM users WHERE id = ?');
         $stmt->execute([(int)$_SESSION['user_id']]);
         $user = $stmt->fetch();
         if (!$user) {
@@ -181,9 +182,64 @@ try {
         }
 
         $coverPhoto = 'php/uploads/' . $filename;
+        $stmt = $conn->prepare('SELECT cover_photo FROM users WHERE id = ?');
+        $stmt->execute([$userId]);
+        $oldCoverPhoto = $stmt->fetchColumn();
         $stmt = $conn->prepare('UPDATE users SET cover_photo = ? WHERE id = ?');
         $stmt->execute([$coverPhoto, $userId]);
+        if ($oldCoverPhoto && strpos($oldCoverPhoto, 'php/uploads/cover-' . $userId . '-') === 0) {
+            $oldPath = __DIR__ . '/uploads/' . basename($oldCoverPhoto);
+            if (is_file($oldPath) && !unlink($oldPath)) {
+                error_log('Could not remove replaced banner image: ' . $oldPath);
+            }
+        }
         accountResponse(['status' => 'success', 'cover_photo' => $coverPhoto]);
+    }
+
+    if ($action === 'upload_avatar' && $method === 'POST') {
+        $file = $_FILES['avatar'] ?? null;
+        if (!$file || !isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK) {
+            accountResponse(['error' => 'Choose a profile photo to upload.'], 400);
+        }
+        if ($file['size'] > 5 * 1024 * 1024) {
+            accountResponse(['error' => 'Profile photos must be 5 MB or smaller.'], 400);
+        }
+
+        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $fileInfo->file($file['tmp_name']);
+        $extensions = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/gif' => 'gif'
+        ];
+        if (!isset($extensions[$mimeType])) {
+            accountResponse(['error' => 'Use a JPEG, PNG, WebP, or GIF profile photo.'], 400);
+        }
+
+        $uploadDirectory = __DIR__ . '/uploads';
+        if (!is_dir($uploadDirectory) && !mkdir($uploadDirectory, 0755, true) && !is_dir($uploadDirectory)) {
+            throw new RuntimeException('Could not create the profile photo directory.');
+        }
+        $filename = 'avatar-' . $userId . '-' . bin2hex(random_bytes(16)) . '.' . $extensions[$mimeType];
+        $destination = $uploadDirectory . '/' . $filename;
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            throw new RuntimeException('Could not save the profile photo.');
+        }
+
+        $avatar = 'php/uploads/' . $filename;
+        $stmt = $conn->prepare('SELECT avatar FROM users WHERE id = ?');
+        $stmt->execute([$userId]);
+        $oldAvatar = $stmt->fetchColumn();
+        $stmt = $conn->prepare('UPDATE users SET avatar = ? WHERE id = ?');
+        $stmt->execute([$avatar, $userId]);
+        if ($oldAvatar && strpos($oldAvatar, 'php/uploads/avatar-' . $userId . '-') === 0) {
+            $oldPath = __DIR__ . '/uploads/' . basename($oldAvatar);
+            if (is_file($oldPath) && !unlink($oldPath)) {
+                error_log('Could not remove replaced profile photo: ' . $oldPath);
+            }
+        }
+        accountResponse(['status' => 'success', 'avatar' => $avatar]);
     }
 
     if ($action === 'search' && $method === 'GET') {

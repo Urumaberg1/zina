@@ -32,11 +32,34 @@ function getPosts() {
     $conn = initDatabase();
     $userId = (int)($_SESSION['user_id'] ?? 0);
     $mine = isset($_GET['mine']) && $_GET['mine'] === '1';
+    $profileId = isset($_GET['user_id']) ? filter_var($_GET['user_id'], FILTER_VALIDATE_INT) : null;
+    $profilePage = isset($_GET['profile_page']) && $_GET['profile_page'] === '1';
+    $beforeId = $profilePage && isset($_GET['before_id'])
+        ? filter_var($_GET['before_id'], FILTER_VALIDATE_INT)
+        : null;
 
     if ($mine && !$userId) {
         jsonResponse(['error' => 'Please sign in to view your posts.'], 401);
     }
+    if (isset($_GET['user_id']) && !$profileId) {
+        jsonResponse(['error' => 'A valid profile ID is required.'], 400);
+    }
+    if ($mine && $profileId) {
+        jsonResponse(['error' => 'Choose either mine or user_id.'], 400);
+    }
+    if ($profilePage && isset($_GET['before_id']) && (!$beforeId || $beforeId < 1)) {
+        jsonResponse(['error' => 'A valid post cursor is required.'], 400);
+    }
 
+    $where = $mine
+        ? 'p.user_id = ?'
+        : ($profileId
+            ? ($userId === (int)$profileId ? 'p.user_id = ?' : "p.user_id = ? AND p.visibility = 'public'")
+            : "p.visibility = 'public'");
+
+    $cursorWhere = $profilePage && $beforeId ? ' AND p.id < ?' : '';
+    $pageSize = $profilePage ? 12 : 50;
+    $orderBy = $profilePage ? 'p.id DESC' : 'p.created_at DESC';
     $sql = "
         SELECT p.id, p.user_id, p.content, p.image, p.visibility, p.created_at,
             u.username, u.display_name AS author, u.avatar AS author_avatar,
@@ -45,17 +68,23 @@ function getPosts() {
             EXISTS(SELECT 1 FROM likes mine WHERE mine.post_id = p.id AND mine.user_id = ?) AS liked
         FROM posts p
         JOIN users u ON u.id = p.user_id
-        WHERE " . ($mine ? 'p.user_id = ?' : "p.visibility = 'public'") . "
-        ORDER BY p.created_at DESC
-        LIMIT 50
-    ";
+        WHERE $where$cursorWhere
+        ORDER BY $orderBy
+        LIMIT " . ($profilePage ? $pageSize + 1 : $pageSize);
     $stmt = $conn->prepare($sql);
     $params = [$userId];
-    if ($mine) {
-        $params[] = $userId;
+    if ($mine || $profileId) {
+        $params[] = $mine ? $userId : (int)$profileId;
+    }
+    if ($profilePage && $beforeId) {
+        $params[] = $beforeId;
     }
     $stmt->execute($params);
     $posts = $stmt->fetchAll();
+    $hasMore = $profilePage && count($posts) > $pageSize;
+    if ($hasMore) {
+        array_pop($posts);
+    }
 
     if ($posts) {
         $postIds = array_column($posts, 'id');
@@ -80,7 +109,9 @@ function getPosts() {
         unset($post);
     }
 
-    jsonResponse(['posts' => $posts]);
+    jsonResponse($profilePage
+        ? ['posts' => $posts, 'has_more' => $hasMore]
+        : ['posts' => $posts]);
 }
 
 function savePostImage($image) {

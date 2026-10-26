@@ -58,7 +58,7 @@ body.dark-mode {
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background: var(--bg); color: var(--text); min-height: 100vh;
+    background: var(--profile-page-background, var(--bg)); color: var(--text); min-height: 100vh;
     transition: background 0.3s ease, color 0.3s ease;
     overflow-x: hidden; line-height: 1.45;
 }
@@ -112,7 +112,7 @@ input, textarea, select { font-family: inherit; outline: none; }
 
 /* ========== COVER PHOTO ========== */
 .cover-wrapper {
-    margin-top: 60px; position: relative; max-width: 1020px;
+    margin-top: 60px; position: relative; z-index: 0; max-width: 1020px;
     margin-left: auto; margin-right: auto; border-radius: 0 0 18px 18px; overflow: hidden;
 }
 .cover-photo {
@@ -122,24 +122,27 @@ input, textarea, select { font-family: inherit; outline: none; }
     transition: background 0.3s;
 }
 .cover-edit-btn {
-    position: absolute; bottom: 16px; right: 16px;
+    position: absolute; top: 16px; left: 16px; z-index: 1;
+    width: 46px; height: 46px; padding: 0; border-radius: 50%;
     background: var(--card-glass); backdrop-filter: blur(8px);
-    color: var(--text); border: none; padding: 8px 18px; border-radius: var(--radius);
-    font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+    color: var(--text); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
     box-shadow: var(--shadow-md); transition: var(--transition);
 }
 .cover-edit-btn:hover { transform: translateY(-2px); }
-.cover-edit-btn svg { width: 16px; height: 16px; fill: currentColor; }
+.cover-edit-btn:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.cover-edit-btn svg { width: 21px; height: 21px; fill: currentColor; }
+#coverFileInput { display: none !important; }
 
 /* ========== PROFILE HEADER ========== */
 .profile-header-wrap {
     max-width: 1020px; margin: 0 auto; background: var(--card);
-    border-radius: 0 0 18px 18px; padding: 0 28px 24px; position: relative;
+    border-radius: 0 0 18px 18px; padding: 0 28px 24px; position: relative; z-index: 1;
     box-shadow: var(--shadow); border: 1px solid var(--border-light); border-top: none;
     transition: background 0.3s ease;
 }
 .profile-header-top { display: flex; align-items: flex-end; gap: 24px; margin-top: -60px; flex-wrap: wrap; }
-.profile-avatar-wrap { position: relative; flex-shrink: 0; }
+.profile-avatar-wrap { position: relative; z-index: 2; flex-shrink: 0; }
 .profile-avatar {
     width: 168px; height: 168px; border-radius: 50%;
     border: 5px solid var(--card); object-fit: cover;
@@ -153,6 +156,72 @@ input, textarea, select { font-family: inherit; outline: none; }
 }
 .avatar-camera-btn:hover { background: var(--border); transform: scale(1.08); }
 .avatar-camera-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* Profile effects are decorative and layered behind the avatar image. */
+.cover-photo::after {
+    content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    opacity: 0; background: var(--profile-effect-gradient); background-size: 220% 220%;
+    animation: var(--profile-effect-animation, effect-drift) 8s ease-in-out infinite;
+}
+.cover-photo[class*="profile-effect-"]::after { opacity: .4; }
+.cover-edit-btn { z-index: 1; }
+.profile-avatar-wrap::before {
+    content: ""; position: absolute; inset: -7px; z-index: 0; pointer-events: none;
+    border: 4px solid transparent; border-radius: 50%;
+    background: linear-gradient(var(--card), var(--card)) padding-box,
+        var(--profile-effect-gradient) border-box;
+    background-size: 220% 220%;
+    animation: var(--profile-effect-animation, effect-drift) 5s ease-in-out infinite;
+}
+.profile-avatar { position: relative; z-index: 1; }
+.avatar-camera-btn { z-index: 2; }
+
+.cover-photo.profile-effect-aurora, .profile-avatar-wrap.profile-effect-aurora { --profile-effect-gradient: linear-gradient(135deg, #14f1d9, #7c3aed, #19c37d); --profile-effect-animation: effect-drift; }
+.cover-photo.profile-effect-neon, .profile-avatar-wrap.profile-effect-neon { --profile-effect-gradient: linear-gradient(135deg, #00f5ff, #f000ff, #00f5ff); --profile-effect-animation: effect-pulse; }
+.cover-photo.profile-effect-sunset, .profile-avatar-wrap.profile-effect-sunset { --profile-effect-gradient: linear-gradient(135deg, #ff512f, #f09819, #dd2476); --profile-effect-animation: effect-sweep; }
+.cover-photo.profile-effect-ocean, .profile-avatar-wrap.profile-effect-ocean { --profile-effect-gradient: linear-gradient(135deg, #00c6ff, #0072ff, #00f5d4); --profile-effect-animation: effect-wave; }
+.cover-photo.profile-effect-galaxy, .profile-avatar-wrap.profile-effect-galaxy { --profile-effect-gradient: conic-gradient(from 0deg, #7b2ff7, #f107a3, #00d4ff, #7b2ff7); --profile-effect-animation: effect-spin; }
+.cover-photo.profile-effect-emerald, .profile-avatar-wrap.profile-effect-emerald { --profile-effect-gradient: linear-gradient(135deg, #00b09b, #96c93d, #00b09b); --profile-effect-animation: effect-breathe; }
+.cover-photo.profile-effect-rose, .profile-avatar-wrap.profile-effect-rose { --profile-effect-gradient: linear-gradient(135deg, #ff4d8d, #c026d3, #ff9a9e); --profile-effect-animation: effect-glow; }
+.cover-photo.profile-effect-ember, .profile-avatar-wrap.profile-effect-ember { --profile-effect-gradient: linear-gradient(135deg, #ff3d00, #ffb000, #ff1744); --profile-effect-animation: effect-flicker; }
+.cover-photo.profile-effect-prism, .profile-avatar-wrap.profile-effect-prism { --profile-effect-gradient: linear-gradient(120deg, #ff4d6d, #ffd166, #06d6a0, #4cc9f0, #9b5de5, #ff4d6d); --profile-effect-animation: effect-prism; }
+.cover-photo.profile-effect-frost, .profile-avatar-wrap.profile-effect-frost { --profile-effect-gradient: linear-gradient(135deg, #e0fbff, #74d7ff, #8a9bff, #e0fbff); --profile-effect-animation: effect-frost; }
+
+body.profile-effect-aurora { --profile-page-background: #e7f8f2; }
+body.profile-effect-neon { --profile-page-background: #f6eafa; }
+body.profile-effect-sunset { --profile-page-background: #fff0e8; }
+body.profile-effect-ocean { --profile-page-background: #e8f5fc; }
+body.profile-effect-galaxy { --profile-page-background: #f0eaf9; }
+body.profile-effect-emerald { --profile-page-background: #e9f6ed; }
+body.profile-effect-rose { --profile-page-background: #fceaf1; }
+body.profile-effect-ember { --profile-page-background: #fff0e8; }
+body.profile-effect-prism { --profile-page-background: #edf5f1; }
+body.profile-effect-frost { --profile-page-background: #eaf5fc; }
+body.dark-mode.profile-effect-aurora { --profile-page-background: #101a1b; }
+body.dark-mode.profile-effect-neon { --profile-page-background: #1a1420; }
+body.dark-mode.profile-effect-sunset { --profile-page-background: #1f1717; }
+body.dark-mode.profile-effect-ocean { --profile-page-background: #111a23; }
+body.dark-mode.profile-effect-galaxy { --profile-page-background: #191525; }
+body.dark-mode.profile-effect-emerald { --profile-page-background: #101c19; }
+body.dark-mode.profile-effect-rose { --profile-page-background: #21151d; }
+body.dark-mode.profile-effect-ember { --profile-page-background: #211713; }
+body.dark-mode.profile-effect-prism { --profile-page-background: #151b20; }
+body.dark-mode.profile-effect-frost { --profile-page-background: #121b25; }
+
+@keyframes effect-drift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@keyframes effect-pulse { 0%, 100% { background-position: 0% 50%; filter: brightness(1); } 50% { background-position: 100% 50%; filter: brightness(1.35); } }
+@keyframes effect-sweep { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+@keyframes effect-wave { 0%, 100% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } }
+@keyframes effect-spin { to { transform: rotate(360deg); } }
+@keyframes effect-breathe { 0%, 100% { background-position: 0% 50%; opacity: .75; } 50% { background-position: 100% 50%; opacity: 1; } }
+@keyframes effect-glow { 0%, 100% { background-position: 0% 50%; filter: saturate(1); } 50% { background-position: 100% 50%; filter: saturate(1.7) brightness(1.2); } }
+@keyframes effect-flicker { 0%, 100% { background-position: 0% 50%; opacity: .85; } 48% { opacity: 1; } 50% { opacity: .65; } 52% { opacity: 1; } }
+@keyframes effect-prism { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+@keyframes effect-frost { 0%, 100% { background-position: 0% 50%; filter: brightness(1); } 50% { background-position: 100% 50%; filter: brightness(1.3); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .cover-photo::after, .profile-avatar-wrap::before { animation: none !important; }
+}
 
 .profile-info { flex: 1; padding-bottom: 8px; min-width: 240px; }
 .profile-name { font-size: 32px; font-weight: 800; line-height: 1.2; color: var(--text); display: flex; align-items: center; gap: 8px; }
@@ -192,11 +261,22 @@ input, textarea, select { font-family: inherit; outline: none; }
 
 /* ========== TWO COLUMN CONTENT ========== */
 .profile-content {
-    max-width: 1020px; margin: 18px auto 0; display: flex; gap: 18px;
-    padding: 0 0 50px; align-items: flex-start;
+    max-width: 1100px; margin: 18px auto 0; display: grid;
+    grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+    gap: 20px; padding: 0 16px 50px; align-items: start;
 }
-.left-col { width: 370px; flex-shrink: 0; position: sticky; top: 135px; display: flex; flex-direction: column; gap: 18px; }
-.right-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+#panel-posts.tab-panel.active { display: grid; }
+.left-col { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.right-col { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.side-panel { background: var(--card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.side-panel-title { padding: 16px 18px 0; font-size: 16px; font-weight: 800; }
+.side-panel-content { padding: 12px 18px 18px; }
+.profile-posts { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.profile-posts-pagination { display: flex; justify-content: center; padding: 8px 0 24px; }
+.load-more-posts { min-width: 180px; padding: 11px 18px; border: 1px solid var(--border); border-radius: var(--radius-full); background: var(--card); color: var(--text); font-weight: 700; box-shadow: var(--shadow-sm); }
+.load-more-posts:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.load-more-posts:disabled { cursor: wait; opacity: .65; }
+.posts-end-message { padding: 16px; color: var(--text-secondary); text-align: center; font-size: 13px; }
 
 /* ========== CARDS ========== */
 .card {
@@ -334,10 +414,12 @@ input, textarea, select { font-family: inherit; outline: none; }
 
 @media(max-width:980px){
     .cover-wrapper, .profile-header-wrap, .profile-tabs-wrap, .profile-content { max-width: 100%; border-radius: 0; }
-    .profile-content { padding: 0 12px 50px; }
+    .profile-content { padding: 0 12px 50px; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 14px; }
 }
 @media(max-width:768px){
-    .left-col { display: none; }
+    .profile-content { grid-template-columns: minmax(0, 1fr); }
+    .left-col { order: 2; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .right-col { order: 1; }
     .profile-header-top { flex-direction: column; align-items: center; text-align: center; margin-top: -60px; }
     .profile-info { text-align: center; }
     .profile-actions { justify-content: center; }
@@ -688,18 +770,17 @@ input, textarea, select { font-family: inherit; outline: none; }
 <!-- ========== COVER PHOTO ========== -->
 <div class="cover-wrapper">
     <div class="cover-photo" id="coverPhoto">
-        <button class="cover-edit-btn" onclick="openCoverModal()">
+        <button class="cover-edit-btn" type="button" onclick="openCoverModal()" aria-label="Upload a cover image" title="Upload a cover image">
             <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
-            <span id="coverEditLabel">Add Banner Photo</span>
         </button>
-        <input type="file" id="coverFileInput" style="display:none" accept="image/jpeg,image/png,image/webp,image/gif">
+        <input type="file" id="coverFileInput" hidden accept="image/jpeg,image/png,image/webp,image/gif" aria-label="Choose a cover image">
     </div>
 </div>
 
 <!-- ========== PROFILE HEADER ========== -->
 <div class="profile-header-wrap">
     <div class="profile-header-top">
-        <div class="profile-avatar-wrap">
+        <div class="profile-avatar-wrap" id="profileAvatarWrap">
             <img class="profile-avatar" id="profileAvatar" src="" alt="Avatar">
             <div class="avatar-camera-btn" onclick="document.getElementById('avatarFileInput').click()" title="Change Profile Photo">
                 <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
@@ -719,6 +800,7 @@ input, textarea, select { font-family: inherit; outline: none; }
             </div>
         </div>
         <div class="profile-actions">
+            <div id="otherProfileActions" style="display:none;"></div>
             <button class="btn-edit-profile" onclick="openEditModal()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 000-1.42l-2.34-2.33a1.003 1.003 0 00-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.83z"/></svg>
                 Edit Profile
@@ -744,45 +826,33 @@ input, textarea, select { font-family: inherit; outline: none; }
 <!-- ========== TAB: POSTS ========== -->
 <div class="profile-content tab-panel active" id="panel-posts">
     <div class="left-col">
-        <!-- About Overview -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Intro</h2>
-                <span class="card-link" onclick="openEditModal()">Edit</span>
-            </div>
-            <div class="card-body">
-                <div class="about-bio" id="aboutBio">Full-Stack Web Developer & Designer 🚀</div>
+        <section class="side-panel">
+            <div class="side-panel-title">Intro</div>
+            <div class="side-panel-content">
+                <div class="about-bio" id="aboutBio">Full-Stack Web Developer & Designer</div>
                 <div class="about-item"><span class="about-icon">💼</span><span>Works at <strong id="aboutWork">Tech Solutions Inc.</strong></span></div>
                 <div class="about-item"><span class="about-icon">🎓</span><span>Studied at <strong id="aboutEdu">Cairo University</strong></span></div>
                 <div class="about-item"><span class="about-icon">📍</span><span>Lives in <strong id="aboutLocation">Cairo, Egypt</strong></span></div>
                 <div class="about-item"><span class="about-icon">❤️</span><span id="aboutRelationship">Single</span></div>
                 <button class="btn-edit-profile" style="width:100%;justify-content:center;margin-top:14px;background:var(--hover-bg);color:var(--text);box-shadow:none;" onclick="openEditModal()">Edit Details</button>
             </div>
-        </div>
+        </section>
 
-        <!-- Photos -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Photos</h2>
-                <span class="card-link" onclick="switchTab('photos')">See All</span>
-            </div>
-            <div style="height:10px"></div>
-            <div class="photos-grid" id="sidePhotosGrid"></div>
-        </div>
+        <section class="side-panel">
+            <div class="side-panel-title" style="display:flex;justify-content:space-between;align-items:center;">Photos <button class="card-link" onclick="switchTab('photos')">See All</button></div>
+            <div class="photos-grid" id="sidePhotosGrid" style="padding-top:12px;"></div>
+        </section>
 
-        <!-- Friends Grid -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Friends</h2>
-                <span class="card-link" onclick="switchTab('friends')">See All</span>
+        <section class="side-panel">
+            <div class="side-panel-title" style="display:flex;justify-content:space-between;align-items:center;">Friends <button class="card-link" onclick="switchTab('friends')">See All</button></div>
+            <div class="side-panel-content" style="padding-top:4px;">
+                <div style="font-size:13.5px;color:var(--text-secondary);margin-bottom:10px;"><span id="sideFriendsCount">8</span> friends</div>
+                <div class="friends-grid" id="sideFriendsGrid"></div>
             </div>
-            <div style="padding:4px 20px 0;font-size:13.5px;color:var(--text-secondary)"><span id="sideFriendsCount">8</span> friends</div>
-            <div style="height:10px"></div>
-            <div class="friends-grid" id="sideFriendsGrid"></div>
-        </div>
+        </section>
     </div>
 
-    <!-- Right Column Posts -->
+    <!-- Main feed uses the document scroll; older pages append below without a nested scroll area. -->
     <div class="right-col">
         <div class="card">
             <div class="create-post-top">
@@ -791,7 +861,8 @@ input, textarea, select { font-family: inherit; outline: none; }
             </div>
         </div>
 
-        <div id="postsFeed"></div>
+        <div class="profile-posts" id="postsFeed"></div>
+        <div class="profile-posts-pagination" id="postsPagination"></div>
     </div>
 </div>
 
@@ -876,6 +947,23 @@ input, textarea, select { font-family: inherit; outline: none; }
                     <option>Engaged</option>
                     <option>Married</option>
                 </select>
+            </div>
+            <div class="modal-field">
+                <label for="editProfileEffect">Profile effect</label>
+                <select id="editProfileEffect" style="width:100%;padding:10px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--text);">
+                    <option value="none">None</option>
+                    <option value="aurora">Aurora Glow</option>
+                    <option value="neon">Neon Pulse</option>
+                    <option value="sunset">Sunset Sweep</option>
+                    <option value="ocean">Ocean Wave</option>
+                    <option value="galaxy">Galaxy Spin</option>
+                    <option value="emerald">Emerald Breathe</option>
+                    <option value="rose">Rose Glow</option>
+                    <option value="ember">Ember Flicker</option>
+                    <option value="prism">Prism Shift</option>
+                    <option value="frost">Frost Light</option>
+                </select>
+                <small style="display:block;color:var(--text-secondary);margin-top:5px;">Choose an animated color effect for your cover and profile-photo frame.</small>
             </div>
         </div>
         <div class="modal-footer">
@@ -1017,8 +1105,17 @@ const COVER_KEY = 'socialvibe_cover';
 const THEME_KEY = 'connectify_theme';
 const ACCOUNT_API = 'php/account.php';
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+const PROFILE_EFFECTS = ['aurora', 'neon', 'sunset', 'ocean', 'galaxy', 'emerald', 'rose', 'ember', 'prism', 'frost'];
+let viewerAccount = null;
 let profileAccount = null;
+let isOwnProfile = true;
 let databasePosts = [];
+let viewedFriends = [];
+let profilePostsPoller = null;
+let profilePostsRefreshInFlight = false;
+let renderedProfilePostsSignature = '';
+let profileHasMorePosts = false;
+let profilePostsLoadingMore = false;
 
 async function profileApi(endpoint, options = {}) {
     const method = options.method || 'GET';
@@ -1062,9 +1159,34 @@ function mapProfilePost(post) {
     };
 }
 
-async function refreshProfilePosts() {
-    const result = await profileApi('posts', { query: '?mine=1' });
-    databasePosts = (result.posts || []).map(mapProfilePost);
+async function refreshProfilePosts({ append = false } = {}) {
+    const queryParams = new URLSearchParams();
+    queryParams.set('profile_page', '1');
+    if (isOwnProfile) {
+        queryParams.set('mine', '1');
+    } else {
+        queryParams.set('user_id', profileAccount.id);
+    }
+    if (append && databasePosts.length) {
+        queryParams.set('before_id', String(databasePosts[databasePosts.length - 1].id));
+    }
+    const previousPosts = databasePosts;
+    const query = `?${queryParams.toString()}`;
+    const result = await profileApi('posts', { query });
+    const page = (result.posts || []).map(post => ({
+        ...mapProfilePost(post),
+        isOwn: isOwnProfile
+    }));
+    profileHasMorePosts = Boolean(result.has_more);
+    if (append) {
+        const existingIds = new Set(previousPosts.map(post => post.id));
+        databasePosts = previousPosts.concat(page.filter(post => !existingIds.has(post.id)));
+    } else {
+        const newestPageIds = new Set(page.map(post => post.id));
+        const oldestPageId = page.length ? page[page.length - 1].id : 0;
+        const olderLoadedPosts = previousPosts.filter(post => post.id < oldestPageId && !newestPageIds.has(post.id));
+        databasePosts = page.concat(olderLoadedPosts);
+    }
     return databasePosts;
 }
 
@@ -1138,23 +1260,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
     initCalc();
     try {
+        const requestedId = new URLSearchParams(location.search).get('user_id');
         const accountResult = await fetch(`${ACCOUNT_API}?action=me`, { credentials: 'same-origin' }).then(response => response.json());
-        profileAccount = accountResult.user;
-        if (!profileAccount) {
+        viewerAccount = accountResult.user;
+        if (!requestedId && !viewerAccount) {
             location.href = 'index.html?auth=1';
             return;
         }
-        const me = getProfile();
-        me.name = profileAccount.display_name;
-        me.username = profileAccount.username;
-        me.userId = profileAccount.id;
-        me.bio = profileAccount.bio || '';
-        me.avatar = profileAccount.avatar || DEFAULT_AVATAR;
-        me.work = profileAccount.work || '';
-        me.location = profileAccount.location || '';
-        saveProfile(me);
-        const friendsResult = await fetch(`${ACCOUNT_API}?action=friends`, { credentials: 'same-origin' }).then(response => response.json());
-        const friends = (friendsResult.friends || []).filter(friend => friend.friendship_status === 'accepted').map(friend => ({
+        const profileResult = await fetch(
+            `php/profile.php${requestedId ? `?user_id=${encodeURIComponent(requestedId)}` : ''}`,
+            { credentials: 'same-origin' }
+        ).then(async response => {
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Could not load this profile.');
+            return result;
+        });
+        profileAccount = profileResult.user;
+        isOwnProfile = Boolean(profileResult.is_owner);
+        if (isOwnProfile) viewerAccount = profileAccount;
+        viewedFriends = (profileResult.friends || []).map(friend => ({
             id: String(friend.id),
             username: friend.username,
             name: friend.display_name,
@@ -1162,25 +1286,92 @@ document.addEventListener('DOMContentLoaded', async () => {
             avatar: friend.avatar || DEFAULT_AVATAR,
             location: friend.location || ''
         }));
-        localStorage.setItem(USERS_KEY, JSON.stringify(friends));
+        if (isOwnProfile) {
+            const me = getProfile();
+            me.name = profileAccount.display_name;
+            me.username = profileAccount.username;
+            me.userId = profileAccount.id;
+            me.bio = profileAccount.bio || '';
+            me.avatar = profileAccount.avatar || DEFAULT_AVATAR;
+            me.work = profileAccount.work || '';
+            me.location = profileAccount.location || '';
+            saveProfile(me);
+            const friendsResult = await fetch(`${ACCOUNT_API}?action=friends`, { credentials: 'same-origin' }).then(response => response.json());
+            const friends = (friendsResult.friends || []).filter(friend => friend.friendship_status === 'accepted').map(friend => ({
+                id: String(friend.id),
+                username: friend.username,
+                name: friend.display_name,
+                role: friend.work || 'Connectify member',
+                avatar: friend.avatar || DEFAULT_AVATAR,
+                location: friend.location || ''
+            }));
+            localStorage.setItem(USERS_KEY, JSON.stringify(friends));
+        }
         await refreshProfilePosts();
     } catch (error) {
-        toast('Could not load your account. Please return to Connectify and try again.');
+        toast(error.message || 'Could not load this profile.');
+        return;
     }
     updateUI();
     renderSideGrids();
     renderUserPosts();
+    renderedProfilePostsSignature = JSON.stringify(databasePosts);
     renderGallery();
+    profilePostsPoller = setInterval(refreshProfilePostsInBackground, 2000);
 });
 
-function updateUI() {
-    const me = getProfile();
-    const members = getAllMembers();
-    const posts = getPosts().filter(p => p.author === me.name || p.isOwn);
+async function refreshProfilePostsInBackground() {
+    if (profilePostsRefreshInFlight || profilePostsLoadingMore || !profileAccount) return;
+    profilePostsRefreshInFlight = true;
+    const previous = databasePosts;
+    try {
+        await refreshProfilePosts();
+        const previousById = new Map(previous.map(post => [post.id, post]));
+        databasePosts.forEach(post => {
+            post.showComments = previousById.get(post.id)?.showComments || false;
+        });
+        const signature = JSON.stringify(databasePosts);
+        if (signature !== renderedProfilePostsSignature && !document.activeElement?.closest('#postsFeed')) {
+            const anchor = Array.from(document.querySelectorAll('#postsFeed .post-card'))
+                .find(post => post.getBoundingClientRect().bottom > 0);
+            const anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+            const anchorId = anchor ? anchor.id : null;
+            renderUserPosts();
+            if (anchorId && anchorTop !== null) {
+                const updatedAnchor = document.getElementById(anchorId);
+                if (updatedAnchor) window.scrollBy(0, updatedAnchor.getBoundingClientRect().top - anchorTop);
+            }
+            updateUI();
+            renderedProfilePostsSignature = signature;
+        }
+    } catch (error) {
+        console.error('Profile post polling failed:', error);
+    } finally {
+        profilePostsRefreshInFlight = false;
+    }
+}
 
-    document.getElementById('navAvatarPic').src = me.avatar;
+function updateUI() {
+    const storedProfile = getProfile();
+    const me = {
+        ...storedProfile,
+        name: profileAccount.display_name,
+        username: profileAccount.username,
+        bio: profileAccount.bio || '',
+        avatar: profileAccount.avatar || DEFAULT_AVATAR,
+        cover_photo: profileAccount.cover_photo || ''
+    };
+    const members = isOwnProfile ? getAllMembers() : viewedFriends;
+    const posts = getPosts();
+
+    const navAvatar = document.getElementById('navAvatarPic');
+    navAvatar.src = viewerAccount?.avatar || DEFAULT_AVATAR;
+    navAvatar.alt = viewerAccount ? 'My profile' : 'Profile';
+    navAvatar.title = 'My Profile';
+    navAvatar.onclick = () => { location.href = 'profile.html'; };
     document.getElementById('profileAvatar').src = me.avatar;
     document.getElementById('createPostAvatar').src = me.avatar;
+    applyProfileEffect(profileAccount.profile_effect);
 
     document.getElementById('profileName').textContent = me.name;
     document.getElementById('profileBio').textContent = me.bio;
@@ -1196,30 +1387,69 @@ function updateUI() {
     document.getElementById('aboutFullRel').textContent = "Relationship: " + (me.relationship || 'Single');
 
     document.getElementById('postCount').textContent = posts.length;
-    document.getElementById('friendsCount').textContent = members.length;
+    document.getElementById('friendsCount').textContent = profileAccount.friends_count ?? members.length;
     document.getElementById('sideFriendsCount').textContent = members.length;
     document.getElementById('friendsTabCount').textContent = members.length;
 
-    const cover = (profileAccount && profileAccount.cover_photo) || localStorage.getItem(COVER_KEY);
+    const cover = profileAccount.cover_photo || (isOwnProfile ? localStorage.getItem(COVER_KEY) : '');
     if (cover) {
         if (cover.startsWith('data:') || cover.startsWith('http') || cover.startsWith('php/uploads/')) {
             document.getElementById('coverPhoto').style.backgroundImage = `url('${cover}')`;
         } else {
             document.getElementById('coverPhoto').style.background = cover;
         }
-        document.getElementById('coverEditLabel').textContent = 'Edit Banner Photo';
+
+        document.querySelector('.cover-edit-btn')?.setAttribute('aria-label', 'Edit cover image');
+        document.querySelector('.cover-edit-btn')?.setAttribute('title', 'Edit cover image');
     } else {
         document.getElementById('coverPhoto').style.backgroundImage = '';
-        document.getElementById('coverEditLabel').textContent = 'Add Banner Photo';
+        document.querySelector('.cover-edit-btn')?.setAttribute('aria-label', 'Upload a cover image');
+        document.querySelector('.cover-edit-btn')?.setAttribute('title', 'Upload a cover image');
+    }
+    document.querySelectorAll('.avatar-camera-btn, .cover-edit-btn, .create-post-top').forEach(element => {
+        element.hidden = !isOwnProfile;
+        element.style.display = isOwnProfile ? '' : 'none';
+    });
+    document.getElementById('coverFileInput').hidden = true;
+    document.getElementById('coverFileInput').disabled = !isOwnProfile;
+    document.getElementById('avatarFileInput').hidden = true;
+    document.getElementById('avatarFileInput').disabled = !isOwnProfile;
+    document.querySelectorAll('.profile-actions > .btn-edit-profile, .profile-actions > .btn-more, #panel-about .btn-edit-profile, #panel-about .card-link, #panel-posts .card-link, .post-delete-btn').forEach(element => {
+        element.hidden = !isOwnProfile;
+        element.style.display = isOwnProfile ? '' : 'none';
+    });
+    const otherActions = document.getElementById('otherProfileActions');
+    if (otherActions) {
+        otherActions.style.display = isOwnProfile ? 'none' : 'block';
+        otherActions.innerHTML = isOwnProfile ? '' : `
+            <button class="btn-edit-profile" onclick="openChat('${Number(profileAccount.id)}')">
+                Message
+            </button>
+        `;
+    }
+    if (!isOwnProfile) {
+        document.title = `${profileAccount.display_name} — Connectify`;
     }
 }
 
+function applyProfileEffect(effect) {
+    const selectedEffect = PROFILE_EFFECTS.includes(effect) ? effect : 'none';
+    const effectClasses = PROFILE_EFFECTS.map(name => `profile-effect-${name}`);
+    document.body.classList.remove(...effectClasses);
+    [document.getElementById('coverPhoto'), document.getElementById('profileAvatarWrap')].forEach(element => {
+        if (!element) return;
+        element.classList.remove(...effectClasses);
+        if (selectedEffect !== 'none') element.classList.add(`profile-effect-${selectedEffect}`);
+    });
+    if (selectedEffect !== 'none') document.body.classList.add(`profile-effect-${selectedEffect}`);
+}
+
 function renderSideGrids() {
-    const members = getAllMembers();
+    const members = isOwnProfile ? getAllMembers() : viewedFriends;
     const sideFriends = document.getElementById('sideFriendsGrid');
     if (sideFriends) {
         sideFriends.innerHTML = members.slice(0, 6).map(m => `
-            <div class="friend-item" onclick="openChat('${m.id}')">
+            <div class="friend-item" onclick="viewMemberProfile('${m.id}')">
                 <img class="friend-pic" src="${m.avatar}" alt="${escapeHtml(m.name)}">
                 <div class="friend-name">${escapeHtml(m.name)}</div>
             </div>
@@ -1237,13 +1467,17 @@ function renderSideGrids() {
     if (friendsTabGrid) {
         friendsTabGrid.innerHTML = members.map(m => `
             <div class="card card-pad" style="text-align:center;">
-                <img src="${m.avatar}" style="width:76px;height:76px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;">
+                <img src="${m.avatar}" onclick="viewMemberProfile('${m.id}')" style="width:76px;height:76px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;cursor:pointer;">
                 <strong style="font-size:15px;display:block;">${escapeHtml(m.name)}</strong>
                 <span style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:12px;">${escapeHtml(m.role || 'Member')}</span>
-                <button class="btn-edit-profile" style="width:100%;justify-content:center;padding:7px;font-size:13px;" onclick="openChat('${m.id}')">Chat</button>
+                <button class="btn-edit-profile" style="width:100%;justify-content:center;padding:7px;font-size:13px;" onclick="viewMemberProfile('${m.id}')">View profile</button>
             </div>
         `).join('');
     }
+}
+
+function viewMemberProfile(userId) {
+    location.href = `profile.html?user_id=${encodeURIComponent(userId)}`;
 }
 
 function renderGallery() {
@@ -1267,23 +1501,26 @@ function uploadToGallery(e) {
     r.readAsDataURL(file);
 }
 
-function renderUserPosts() {
+function renderUserPosts(appendFrom = null) {
     const me = getProfile();
-    const myPosts = getPosts().filter(p => p.author === me.name || p.isOwn);
+    const myPosts = getPosts();
     const feed = document.getElementById('postsFeed');
     if (!feed) return;
 
     if (myPosts.length === 0) {
         feed.innerHTML = `
-            <div class="card card-pad" style="text-align:center;padding:40px 20px;">
+            <div class="card card-pad profile-empty-state" style="text-align:center;padding:40px 20px;">
                 <h3>No posts yet</h3>
                 <p style="color:var(--text-secondary);font-size:14px;margin-top:4px;">Share your thoughts with the community!</p>
             </div>
         `;
+        renderPostsPagination();
         return;
     }
 
-    feed.innerHTML = myPosts.map(p => {
+    const postsToRender = appendFrom === null ? myPosts : myPosts.slice(appendFrom);
+    if (appendFrom === null || appendFrom === 0) feed.innerHTML = '';
+    const postsHTML = postsToRender.map(p => {
         const comments = p.comments || [];
         const commentsHTML = comments.map(c => `
             <div class="p-comment-row">
@@ -1303,7 +1540,7 @@ function renderUserPosts() {
                     <div class="post-user-name">${escapeHtml(p.author)}</div>
                     <div class="post-time">${p.time || 'Recently'}</div>
                 </div>
-                <button class="post-delete-btn" onclick="deleteProfilePost(${p.id})" title="Delete post">✕</button>
+                ${isOwnProfile ? `<button class="post-delete-btn" onclick="deleteProfilePost(${p.id})" title="Delete post">✕</button>` : ''}
             </div>
             ${p.text ? `<div class="post-content">${escapeHtml(p.text)}</div>` : ''}
             ${p.image ? `<img class="post-image" src="${p.image}" onclick="openLightbox('${p.image}')" alt="Post media">` : ''}
@@ -1335,6 +1572,40 @@ function renderUserPosts() {
         </div>
         `;
     }).join('');
+    if (postsHTML) feed.insertAdjacentHTML('beforeend', postsHTML);
+    renderPostsPagination();
+}
+
+function renderPostsPagination() {
+    const pagination = document.getElementById('postsPagination');
+    if (!pagination) return;
+    if (profileHasMorePosts) {
+        pagination.innerHTML = `
+            <button class="load-more-posts" type="button" onclick="loadMoreProfilePosts()" ${profilePostsLoadingMore ? 'disabled' : ''}>
+                ${profilePostsLoadingMore ? 'Loading posts…' : 'Load more posts'}
+            </button>
+        `;
+    } else if (databasePosts.length) {
+        pagination.innerHTML = '<div class="posts-end-message">You’re all caught up.</div>';
+    } else {
+        pagination.innerHTML = '';
+    }
+}
+
+async function loadMoreProfilePosts() {
+    if (profilePostsLoadingMore || profilePostsRefreshInFlight || !profileHasMorePosts) return;
+    const previousCount = databasePosts.length;
+    profilePostsLoadingMore = true;
+    renderPostsPagination();
+    try {
+        await refreshProfilePosts({ append: true });
+        renderUserPosts(previousCount);
+    } catch (error) {
+        toast(error.message || 'Could not load more posts.');
+    } finally {
+        profilePostsLoadingMore = false;
+        renderPostsPagination();
+    }
 }
 
 function toggleProfileComments(id) {
@@ -1355,10 +1626,18 @@ async function submitProfileComment(id) {
     if (!inp || !inp.value.trim()) return;
     const text = inp.value.trim();
     try {
-        await profileApi('comments', { method: 'POST', body: { post_id: id, content: text } });
-        await refreshProfilePosts();
+        const result = await profileApi('comments', { method: 'POST', body: { post_id: id, content: text } });
         const post = databasePosts.find(item => item.id === id);
-        if (post) post.showComments = true;
+        if (post) {
+            post.comments.push({
+                id: Number(result.comment.id),
+                author: result.comment.author,
+                avatar: result.comment.author_avatar || DEFAULT_AVATAR,
+                text: result.comment.content,
+                time: new Date(result.comment.created_at.replace(' ', 'T')).toLocaleString()
+            });
+            post.showComments = true;
+        }
         renderUserPosts();
         toast('Comment added to post! 💬');
     } catch (error) {
@@ -1406,17 +1685,36 @@ async function deleteProfilePost(id) {
 
 // Modals
 function openEditModal() {
-    const me = getProfile();
+    if (!isOwnProfile) {
+        toast('You can only edit your own profile.');
+        return;
+    }
+    const me = {
+        ...getProfile(),
+        name: profileAccount.display_name,
+        bio: profileAccount.bio || '',
+        work: profileAccount.work || '',
+        education: profileAccount.education || '',
+        location: profileAccount.location || '',
+        avatar: profileAccount.avatar || DEFAULT_AVATAR
+    };
     document.getElementById('editName').value = me.name;
     document.getElementById('editBio').value = me.bio;
     document.getElementById('editWork').value = me.work;
     document.getElementById('editEdu').value = me.education;
     document.getElementById('editLocation').value = me.location;
     document.getElementById('editRelationship').value = me.relationship || 'Single';
+    document.getElementById('editProfileEffect').value = PROFILE_EFFECTS.includes(profileAccount.profile_effect)
+        ? profileAccount.profile_effect
+        : 'none';
     openModal('editModal');
 }
 
 async function saveProfileChanges() {
+    if (!isOwnProfile) {
+        toast('You can only edit your own profile.');
+        return;
+    }
     const me = getProfile();
     const updated = {
         ...me,
@@ -1425,7 +1723,8 @@ async function saveProfileChanges() {
         work: document.getElementById('editWork').value.trim(),
         education: document.getElementById('editEdu').value.trim(),
         location: document.getElementById('editLocation').value.trim(),
-        relationship: document.getElementById('editRelationship').value
+        relationship: document.getElementById('editRelationship').value,
+        profile_effect: document.getElementById('editProfileEffect').value
     };
     try {
         const response = await fetch('php/profile.php', {
@@ -1438,7 +1737,8 @@ async function saveProfileChanges() {
                 avatar: updated.avatar,
                 work: updated.work,
                 education: updated.education,
-                location: updated.location
+                location: updated.location,
+                profile_effect: updated.profile_effect
             })
         });
         const result = await response.json();
@@ -1475,6 +1775,17 @@ async function submitProfilePost() {
 document.getElementById('coverFileInput').addEventListener('change', async function(e){
     const file = e.target.files[0];
     if (!file) return;
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+        toast('Use a JPEG, PNG, WebP, or GIF banner image.');
+        e.target.value = '';
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        toast('Banner images must be 5 MB or smaller.');
+        e.target.value = '';
+        return;
+    }
     const formData = new FormData();
     formData.append('cover_photo', file);
     try {
@@ -1499,18 +1810,41 @@ document.getElementById('coverFileInput').addEventListener('change', async funct
     }
 });
 
-document.getElementById('avatarFileInput').addEventListener('change', function(e){
+document.getElementById('avatarFileInput').addEventListener('change', async function(e){
     const file = e.target.files[0];
     if (!file) return;
-    const r = new FileReader();
-    r.onload = (ev) => {
+    if (file.size > 5 * 1024 * 1024) {
+        toast('Profile photos must be 5 MB or smaller.');
+        e.target.value = '';
+        return;
+    }
+    const formData = new FormData();
+    formData.append('avatar', file);
+    try {
+        const response = await fetch(`${ACCOUNT_API}?action=upload_avatar`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: formData
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Could not save your profile photo.');
+        if (typeof result.avatar !== 'string' || !result.avatar) {
+            throw new Error('The server did not return the saved profile photo.');
+        }
+        profileAccount.avatar = result.avatar;
+        if (viewerAccount && Number(viewerAccount.id) === Number(profileAccount.id)) {
+            viewerAccount.avatar = result.avatar;
+        }
         const me = getProfile();
-        me.avatar = ev.target.result;
+        me.avatar = result.avatar;
         saveProfile(me);
         updateUI();
-        toast('Profile picture updated! 📸');
-    };
-    r.readAsDataURL(file);
+        toast('Profile photo saved! 📸');
+    } catch (error) {
+        toast(error.message || 'Could not save your profile photo.');
+    } finally {
+        e.target.value = '';
+    }
 });
 
 function openCoverModal() {
@@ -1525,11 +1859,7 @@ function switchTab(t) {
 
 // Open the authenticated messenger for an accepted friend.
 function openChat(userId) {
-    if (!profileAccount) {
-        location.href = 'index.html?auth=1';
-        return;
-    }
-    location.href = `index.html?chat=${encodeURIComponent(userId)}`;
+    location.href = `index.html?auth=1&chat=${encodeURIComponent(userId)}&fullscreen=1`;
 }
 
 function openLightbox(src) {
