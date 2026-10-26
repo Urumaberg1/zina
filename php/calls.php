@@ -36,7 +36,7 @@ try {
             LEFT JOIN chat_groups g ON g.id = c.group_id
             WHERE c.status = 'active'
                 AND c.created_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 2 HOUR)
-                AND mine.status IN ('ringing', 'joined', 'declined')
+                AND mine.status IN ('ringing', 'joined', 'declined', 'left')
             ORDER BY c.created_at DESC
             LIMIT 20
         ");
@@ -202,13 +202,19 @@ try {
     }
 
     if ($action === 'join') {
-        if ($call['status'] === 'ended' || $call['participant_status'] === 'left') {
+        $conn->beginTransaction();
+        $lockStmt = $conn->prepare('SELECT status FROM calls WHERE id = ? FOR UPDATE');
+        $lockStmt->execute([$callId]);
+        $lockedCall = $lockStmt->fetch();
+        if (!$lockedCall || $lockedCall['status'] !== 'active') {
+            $conn->rollBack();
             jsonResponse(['error' => 'This call has ended.'], 409);
         }
         $conn->prepare('DELETE FROM call_signals WHERE call_id = ? AND (sender_id = ? OR receiver_id = ?)')
             ->execute([$callId, $userId, $userId]);
-        $conn->prepare("UPDATE call_participants SET status = 'joined', joined_at = CURRENT_TIMESTAMP, last_seen_at = NULL WHERE call_id = ? AND user_id = ?")
+        $conn->prepare("UPDATE call_participants SET status = 'joined', joined_at = CURRENT_TIMESTAMP, is_muted = 0, is_camera_enabled = 0, is_sharing_screen = 0, last_seen_at = NULL WHERE call_id = ? AND user_id = ?")
             ->execute([$callId, $userId]);
+        $conn->commit();
         jsonResponse(['status' => 'success']);
     }
 
@@ -275,22 +281,32 @@ try {
     }
 
     if ($action === 'leave') {
-        if ((int)$call['started_by'] === $userId && !empty($data['end_call'])) {
-            $conn->prepare("UPDATE calls SET status = 'ended', ended_at = CURRENT_TIMESTAMP WHERE id = ?")
-                ->execute([$callId]);
-            $conn->prepare("UPDATE call_participants SET status = 'left', last_seen_at = CURRENT_TIMESTAMP WHERE call_id = ? AND status <> 'left'")
-                ->execute([$callId]);
-        } else {
-            $conn->prepare('DELETE FROM call_signals WHERE call_id = ? AND (sender_id = ? OR receiver_id = ?)')
-                ->execute([$callId, $userId, $userId]);
-            $conn->prepare("
-                UPDATE call_participants
-                SET status = 'ringing', is_muted = 0, is_camera_enabled = 0,
-                    is_sharing_screen = 0, last_seen_at = CURRENT_TIMESTAMP
-                WHERE call_id = ? AND user_id = ?
-            ")
-                ->execute([$callId, $userId]);
+        $conn->beginTransaction();
+        $lockStmt = $conn->prepare('SELECT status FROM calls WHERE id = ? FOR UPDATE');
+        $lockStmt->execute([$callId]);
+        $lockedCall = $lockStmt->fetch();
+        if (!$lockedCall || $lockedCall['status'] !== 'active') {
+            $conn->rollBack();
+            jsonResponse(['error' => 'This call has already ended.'], 409);
         }
+        $conn->prepare('DELETE FROM call_signals WHERE call_id = ? AND (sender_id = ? OR receiver_id = ?)')
+            ->execute([$callId, $userId, $userId]);
+        $conn->prepare("
+            UPDATE call_participants
+            SET status = 'left', is_muted = 0, is_camera_enabled = 0,
+                is_sharing_screen = 0, last_seen_at = CURRENT_TIMESTAMP
+            WHERE call_id = ? AND user_id = ?
+        ")->execute([$callId, $userId]);
+        $conn->prepare("
+            UPDATE calls
+            SET status = 'ended', ended_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND status = 'active'
+                AND NOT EXISTS (
+                    SELECT 1 FROM call_participants
+                    WHERE call_id = ? AND status = 'joined'
+                )
+        ")->execute([$callId, $callId]);
+        $conn->commit();
         jsonResponse(['status' => 'success']);
     }
 

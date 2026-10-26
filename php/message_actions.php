@@ -17,7 +17,7 @@ if (!is_array($data)) {
 }
 $messageId = filter_var($data['message_id'] ?? null, FILTER_VALIDATE_INT);
 $action = $data['action'] ?? '';
-if (!$messageId || !in_array($action, ['edit', 'delete'], true)) {
+if (!$messageId || !in_array($action, ['edit', 'delete', 'react'], true)) {
     jsonResponse(['error' => 'Choose a valid message action.'], 400);
 }
 
@@ -30,10 +30,13 @@ try {
     ');
     $stmt->execute([$messageId]);
     $message = $stmt->fetch();
-    if (!$message || (int)$message['sender_id'] !== $userId) {
+    if (!$message) {
+        jsonResponse(['error' => 'Message not found.'], 404);
+    }
+    if ($action !== 'react' && (int)$message['sender_id'] !== $userId) {
         jsonResponse(['error' => 'You can only edit or delete your own messages.'], 403);
     }
-    if ($message['deleted_at'] !== null) {
+    if ($action !== 'react' && $message['deleted_at'] !== null) {
         jsonResponse(['error' => 'This message has already been deleted.'], 409);
     }
 
@@ -54,6 +57,33 @@ try {
     }
     if (!$memberStmt->fetch()) {
         jsonResponse(['error' => 'You no longer have access to this conversation.'], 403);
+    }
+
+    if ($action === 'react') {
+        if ($message['deleted_at'] !== null) {
+            jsonResponse(['error' => 'Deleted messages cannot be reacted to.'], 409);
+        }
+        $reaction = $data['reaction'] ?? null;
+        $allowedReactions = [
+            'like', 'love', 'haha', 'wow', 'sad', 'angry', 'celebrate', 'clap', 'fire',
+            'think', 'smile', 'laugh', 'cry', 'cool', 'party', 'pray', 'hundred',
+            'eyes', 'heart_eyes', 'wink', 'grin', 'hug', 'rocket', 'sparkles'
+        ];
+        if ($reaction !== null && $reaction !== '' &&
+            (!is_string($reaction) || !in_array($reaction, $allowedReactions, true))) {
+            jsonResponse(['error' => 'Choose a valid message reaction.'], 400);
+        }
+        if ($reaction === null || $reaction === '') {
+            $reactionStmt = $conn->prepare('DELETE FROM message_reactions WHERE message_id = ? AND user_id = ?');
+            $reactionStmt->execute([$messageId, $userId]);
+        } else {
+            $reactionStmt = $conn->prepare('
+                INSERT INTO message_reactions (message_id, user_id, reaction) VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE reaction = VALUES(reaction), created_at = CURRENT_TIMESTAMP
+            ');
+            $reactionStmt->execute([$messageId, $userId, $reaction]);
+        }
+        jsonResponse(['status' => 'success', 'message_id' => $messageId, 'reaction' => $reaction ?: null]);
     }
 
     if ($action === 'edit') {

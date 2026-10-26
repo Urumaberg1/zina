@@ -89,6 +89,36 @@ try {
     }
 
     $messages = array_reverse($stmt->fetchAll());
+    $messageIds = array_column($messages, 'id');
+    foreach ($messages as &$message) {
+        $message['reactions'] = [];
+    }
+    unset($message);
+    if ($messageIds) {
+        $placeholders = implode(',', array_fill(0, count($messageIds), '?'));
+        $reactionStmt = $conn->prepare("
+            SELECT message_id, reaction, COUNT(*) AS reaction_count,
+                MAX(user_id = ?) AS reacted_by_me
+            FROM message_reactions
+            WHERE message_id IN ($placeholders)
+            GROUP BY message_id, reaction
+            ORDER BY reaction
+        ");
+        $reactionStmt->execute(array_merge([$userId], $messageIds));
+        $messageIndexes = [];
+        foreach ($messages as $index => $message) {
+            $messageIndexes[(int)$message['id']] = $index;
+        }
+        foreach ($reactionStmt->fetchAll() as $reaction) {
+            $messageIndex = $messageIndexes[(int)$reaction['message_id']] ?? null;
+            if ($messageIndex === null) continue;
+            $messages[$messageIndex]['reactions'][] = [
+                'reaction' => $reaction['reaction'],
+                'count' => (int)$reaction['reaction_count'],
+                'reacted_by_me' => (bool)$reaction['reacted_by_me']
+            ];
+        }
+    }
     $typingStmt = $conn->prepare("
         SELECT u.display_name
         FROM typing_indicators t

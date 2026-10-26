@@ -65,14 +65,15 @@ function getPosts() {
             u.username, u.display_name AS author, u.avatar AS author_avatar,
             (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) AS likes_count,
             (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comments_count,
-            EXISTS(SELECT 1 FROM likes mine WHERE mine.post_id = p.id AND mine.user_id = ?) AS liked
+            EXISTS(SELECT 1 FROM likes mine WHERE mine.post_id = p.id AND mine.user_id = ?) AS liked,
+            (SELECT mine.reaction FROM likes mine WHERE mine.post_id = p.id AND mine.user_id = ? LIMIT 1) AS my_reaction
         FROM posts p
         JOIN users u ON u.id = p.user_id
         WHERE $where$cursorWhere
         ORDER BY $orderBy
         LIMIT " . ($profilePage ? $pageSize + 1 : $pageSize);
     $stmt = $conn->prepare($sql);
-    $params = [$userId];
+    $params = [$userId, $userId];
     if ($mine || $profileId) {
         $params[] = $mine ? $userId : (int)$profileId;
     }

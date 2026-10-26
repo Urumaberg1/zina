@@ -65,9 +65,25 @@
             min-height: 100vh;
             overflow-x: hidden;
         }
+        #persistentPageFrame {
+            position: fixed; inset: 0; z-index: 1000; display: none;
+            width: 100%; height: 100%; border: 0; background: var(--bg);
+        }
+        body.persistent-page-active > :not(#persistentPageFrame):not(#activeCallOverlay):not(.call-invite):not(#callScreenViewer) {
+            visibility: hidden !important;
+        }
         a { text-decoration: none; color: inherit; }
         button { cursor: pointer; font-family: inherit; border: none; outline: none; background: transparent; color: inherit; }
         input, textarea, select { font-family: inherit; outline: none; }
+        button, a[href], [role="button"], [onclick] {
+            transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease,
+                box-shadow 0.18s ease, transform 0.18s ease, filter 0.18s ease;
+        }
+        button:hover:not(:disabled), [role="button"]:hover { filter: brightness(1.06); }
+        a[href]:hover, span[onclick]:hover { color: var(--primary); }
+        @media (prefers-reduced-motion: reduce) {
+            button, a[href], [role="button"], [onclick] { transition-duration: 0.01ms !important; }
+        }
 
         /* Scrollbar */
         ::-webkit-scrollbar { width: 7px; height: 7px; }
@@ -84,18 +100,6 @@
             padding: 0 20px; border-bottom: 1px solid var(--border-light);
         }
         .nav-left { display: flex; align-items: center; gap: 14px; }
-        .logo {
-            font-size: 24px; font-weight: 900; letter-spacing: -0.5px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 50%, #ec4899 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text; display: flex; align-items: center; gap: 8px;
-        }
-        .logo svg { width: 38px; height: 38px; flex: 0 0 auto; filter: drop-shadow(0 2px 3px rgba(37, 99, 235, 0.22)); }
-        .logo-word {
-            font-family: "Segoe Script", "Brush Script MT", "URW Chancery L", cursive;
-            font-size: 30px; font-weight: 600; font-style: italic; letter-spacing: -1.2px;
-            line-height: 1;
-        }
         .search-box {
             display: flex; align-items: center; gap: 10px;
             background: var(--input-bg); border-radius: 50px; padding: 8px 16px;
@@ -230,7 +234,13 @@
         .popover-info { flex: 1; min-width: 0; }
         .popover-info strong { font-size: 13.5px; display: block; line-height: 1.35; }
         .popover-info span { font-size: 12px; color: var(--text-secondary); display: block; margin-top: 2px; }
+        .popover-info .notification-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+        .notification-count {
+            min-width: 24px; padding: 4px 7px; border-radius: var(--radius-full);
+            background: var(--primary); color: white; font-size: 11px; font-weight: 800;
+            text-align: center; flex: 0 0 auto;
+        }
 
         /* Profile Menu Popover */
         .profile-menu { width: 280px; padding: 10px; }
@@ -401,6 +411,7 @@
 
         /* ========== POST CARD ========== */
         .post { animation: slideUp 0.3s ease; position: relative; }
+        .card.post.post-menu-open, .card.post.post-reaction-open { overflow: visible; z-index: 60; }
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(14px); }
             to { opacity: 1; transform: translateY(0); }
@@ -630,13 +641,83 @@
         .message-sender-link { display: block; color: inherit; font-size: 11px; font-weight: 700; margin-bottom: 2px; cursor: pointer; }
         .message-sender-link:hover { text-decoration: underline; }
         .message-edited { display: inline-block; margin-left: 5px; opacity: .7; font-size: 10px; }
+        .message-reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .message-reactions[hidden] { display: none; }
+        .message-reaction {
+            display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px;
+            border: 1px solid var(--border); border-radius: 999px;
+            background: var(--card); color: var(--text); font-size: 12px; line-height: 1.3;
+        }
+        .msg-me .message-reaction { background: rgba(255,255,255,.16); color: white; border-color: rgba(255,255,255,.28); }
+        .message-reaction.reacted { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary-light); }
         .message-context-menu { position: fixed; z-index: 3000; min-width: 145px; padding: 5px; background: var(--card); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow-lg); }
         .message-context-menu button { display: block; width: 100%; padding: 8px 10px; border-radius: 6px; text-align: left; color: var(--text); }
         .message-context-menu button:hover { background: var(--hover-bg); }
+        .message-reaction-tray {
+            display: flex; align-items: center; gap: 3px; padding: 4px;
+            margin-bottom: 5px; border-bottom: 1px solid var(--border-light);
+        }
+        .message-reaction-tray button {
+            width: 34px; height: 34px; padding: 0; display: grid; place-items: center;
+            border-radius: 50%; font-size: 21px; text-align: center;
+        }
+        .message-reaction-tray button:hover { background: var(--hover-bg); transform: scale(1.12); }
+        .message-reaction-tray .message-more-reactions { font-size: 18px; font-weight: 700; color: var(--primary); }
+        .emoji-picker-panel {
+            position: fixed; z-index: 3010; width: min(300px, calc(100vw - 16px));
+            max-height: min(270px, calc(100vh - 16px)); overflow: auto;
+            padding: 10px; border: 1px solid var(--border); border-radius: 14px;
+            background: var(--card); color: var(--text); box-shadow: var(--shadow-lg);
+        }
+        .emoji-picker-title { margin: 0 0 8px; font-size: 12px; color: var(--text-secondary); font-weight: 700; }
+        .emoji-picker-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; }
+        .emoji-picker-grid button { min-width: 0; height: 32px; padding: 0; border-radius: 7px; font-size: 20px; }
+        .emoji-picker-grid button:hover { background: var(--hover-bg); transform: scale(1.12); }
+        .post-reactions-box {
+            position: absolute; bottom: 46px; left: 0; z-index: 100;
+            display: none; align-items: center; gap: 3px; padding: 6px;
+            background: var(--card); border: 1px solid var(--border-light);
+            border-radius: 14px; box-shadow: var(--shadow-lg);
+        }
+        .post-reactions-box.show { display: flex; animation: popIn .16s ease-out; }
+        .post-reactions-box > button {
+            width: 36px; height: 38px; display: grid; place-items: center;
+            border-radius: 10px; font-size: 23px; transition: transform .15s, background .15s;
+        }
+        .post-reactions-box > button:hover { background: var(--primary-light); transform: translateY(-3px) scale(1.12); }
+        .post-reactions-box > .post-more-reactions {
+            border: 1px solid var(--border-light); color: var(--primary); font-size: 20px; font-weight: 700;
+        }
+        .post-emoji-picker { position: absolute; bottom: calc(100% + 8px); left: 0; }
         .chat-reply-preview { display: none; align-items: center; justify-content: space-between; padding: 6px 12px; background: var(--hover-bg); border-top: 1px solid var(--border-light); font-size: 12px; }
         .chat-controls button { flex: 0 0 auto; }
         .call-overlay { position: fixed; inset: 0; z-index: 5000; background: rgba(0,0,0,.72); display: flex; align-items: center; justify-content: center; padding: 20px; }
         .call-panel { width: min(760px, 100%); max-height: 90vh; overflow: auto; background: var(--card); color: var(--text); border-radius: 16px; padding: 18px; box-shadow: var(--shadow-lg); }
+        .call-panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+        .call-panel-heading { min-width: 0; }
+        .call-panel-heading h3 { margin: 0 0 4px; }
+        .call-panel-heading p { margin: 0; color: var(--text-secondary); font-size: 13px; }
+        .call-window-controls { display: flex; gap: 6px; flex: 0 0 auto; }
+        .call-window-controls button, .call-screen-toolbar button {
+            min-width: 34px; min-height: 34px; padding: 6px 10px; border: 1px solid var(--border);
+            border-radius: 8px; background: var(--hover-bg); color: var(--text); font-weight: 700;
+        }
+        .call-window-controls button:hover { background: var(--border); }
+        .call-overlay.is-minimized { background: transparent; pointer-events: none; align-items: flex-end; justify-content: flex-end; padding: 16px; }
+        .call-overlay.is-minimized .call-panel {
+            position: fixed; left: 16px; top: 120px; right: auto; bottom: auto;
+            width: min(290px, calc(100vw - 32px)); max-height: min(260px, calc(100vh - 32px));
+            padding: 10px; pointer-events: auto;
+        }
+        body.call-window-replaced #sideCover { visibility: hidden; }
+        .call-overlay.is-minimized .call-panel-header { cursor: grab; touch-action: none; }
+        .call-overlay.is-minimized .call-panel-header:active { cursor: grabbing; }
+        .call-overlay.is-minimized .call-video-grid { max-height: 82px; overflow: auto; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); margin: 8px 0; gap: 6px; }
+        .call-overlay.is-minimized .call-video-tile { min-height: 62px; }
+        .call-overlay.is-minimized .call-video-tile video { min-height: 62px; }
+        .call-overlay.is-minimized .call-controls { gap: 5px !important; flex-wrap: wrap; }
+        .call-overlay.is-minimized .call-controls .btn-post { width: auto; padding: 6px 8px; font-size: 11px; }
+        .call-overlay.is-minimized .call-controls .call-noise-control { display: none; }
         .call-video-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 10px; margin: 14px 0; }
         .call-video-tile { position: relative; min-height: 150px; aspect-ratio: 16 / 10; background: #171717; border: 2px solid transparent; border-radius: 12px; overflow: hidden; transition: border-color .15s, box-shadow .15s; }
         .call-video-tile.is-speaking { border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168,85,247,.34), 0 0 22px rgba(168,85,247,.55); }
@@ -646,7 +727,7 @@
         .call-video-avatar img { width: clamp(72px, 18vw, 126px); height: clamp(72px, 18vw, 126px); border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,.35); }
         .call-video-avatar span { width: clamp(72px, 18vw, 126px); height: clamp(72px, 18vw, 126px); display: grid; place-items: center; border-radius: 50%; background: #6d28d9; color: white; font-size: 36px; font-weight: 700; }
         .call-video-label { position: absolute; left: 8px; bottom: 8px; display: flex; align-items: center; gap: 6px; padding: 4px 7px; border-radius: 6px; background: rgba(0,0,0,.68); color: white; font-size: 12px; }
-        .call-muted-icon { display: none; width: 14px; height: 14px; color: #fff; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .call-muted-icon { display: none; width: 19px; height: 19px; padding: 2px; border-radius: 50%; background: rgba(255,255,255,.18); color: #fff; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 2px rgba(0,0,0,.9)); }
         .call-video-tile.is-muted .call-muted-icon { display: inline-block; }
         .call-participant-options { position: absolute; top: 7px; right: 7px; z-index: 2; }
         .call-participant-options > button { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: rgba(0,0,0,.68); color: white; font-size: 20px; cursor: pointer; }
@@ -656,6 +737,15 @@
         .call-participant-menu button { width: 100%; height: auto; margin-top: 5px; padding: 7px; border: 0; border-radius: 7px; background: #3b3545; color: white; font-size: 12px; text-align: left; cursor: pointer; }
         .call-share-label { display: none; position: absolute; top: 8px; left: 8px; z-index: 1; padding: 4px 7px; border-radius: 6px; background: rgba(0,0,0,.68); color: white; font-size: 11px; }
         .call-video-tile.is-sharing-screen .call-share-label { display: block; }
+        .call-screen-view-btn { display: none; position: absolute; right: 8px; bottom: 8px; z-index: 2; padding: 7px 10px; border: 1px solid rgba(255,255,255,.32); border-radius: 7px; background: rgba(0,0,0,.72); color: white; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .call-video-tile.is-sharing-screen .call-screen-view-btn { display: block; }
+        .call-screen-viewer { position: fixed; inset: 0; z-index: 6000; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #050507; color: white; }
+        .call-screen-viewer video { width: 100%; height: 100%; object-fit: contain; transform: scale(var(--call-screen-zoom, 1)); transition: transform .18s ease; }
+        .call-screen-toolbar { position: absolute; z-index: 1; left: 50%; bottom: 22px; display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid rgba(255,255,255,.2); border-radius: 12px; background: rgba(18,18,22,.88); transform: translateX(-50%); }
+        .call-screen-toolbar button { border-color: rgba(255,255,255,.18); background: #2b2b32; color: white; white-space: nowrap; }
+        .call-screen-toolbar button:hover { background: #41414a; }
+        .call-screen-zoom-value { min-width: 48px; text-align: center; font-size: 13px; font-weight: 700; }
+        .call-screen-viewer:fullscreen { width: 100vw; height: 100vh; }
         .call-audio-player { display: none; }
         .call-invite { position: fixed; z-index: 4500; right: 18px; bottom: 18px; width: min(360px, calc(100vw - 36px)); padding: 16px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-lg); animation: callInviteIn .28s ease-out; }
         .call-invite::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; border-radius: 16px 0 0 16px; background: var(--green); }
@@ -736,6 +826,7 @@
             background: var(--card); transition: border-color 0.2s;
         }
         .modal-field input:focus, .modal-field textarea:focus { border-color: var(--primary); }
+        #postContentInput { color: var(--text); }
 
         .btn-post {
             width: 100%; padding: 11px; border-radius: var(--radius);
@@ -758,18 +849,86 @@
         .toast-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
         /* Responsive */
-        @media (max-width: 1200px) { .sidebar-r { display: none; } }
+        @media (max-width: 1200px) {
+            .main {
+                display: grid; grid-template-columns: minmax(240px, 290px) minmax(0, 1fr);
+                align-items: start; gap: 20px;
+            }
+            .sidebar, .sidebar-r {
+                position: static; width: auto; height: auto; min-width: 0;
+            }
+            .sidebar-r {
+                grid-column: 1 / -1; display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+                gap: 16px; padding-bottom: 24px;
+            }
+            .sidebar-r > * { margin-top: 0 !important; }
+            .feed { min-width: 0; max-width: none; }
+        }
         @media (max-width: 992px) {
-            .sidebar { display: none; }
-            .main { justify-content: center; }
-            .feed { max-width: 620px; }
-            .nav-center { display: none; }
+            .navbar {
+                height: auto; min-height: 60px; flex-wrap: wrap; row-gap: 4px;
+                padding: 5px 12px;
+            }
+            .nav-left { order: 1; flex: 1 1 auto; min-width: 0; }
+            .nav-right { order: 2; gap: 6px; }
+            .nav-center {
+                order: 3; display: flex; flex: 0 0 100%; width: 100%; min-width: 0;
+                justify-content: center; gap: 4px;
+                border-top: 1px solid var(--border-light); padding-top: 4px;
+            }
+            .nav-btn {
+                flex: 1 1 0; min-width: 0; max-width: 120px; padding: 6px 10px;
+                height: 48px; flex-direction: column; gap: 1px;
+            }
+            .nav-btn::after {
+                content: attr(title); display: block; font-size: 10px;
+                line-height: 1.1; white-space: normal; text-align: center;
+            }
+            .main {
+                display: grid; grid-template-columns: minmax(0, 1fr);
+                grid-template-areas: "feed" "sidebar" "sidebar-r";
+                gap: 16px; margin-top: 120px;
+            }
+            .feed { grid-area: feed; width: 100%; max-width: 680px; }
+            .sidebar {
+                grid-area: sidebar; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+                gap: 16px; padding-bottom: 0;
+            }
+            .sidebar > * { min-width: 0; margin-top: 0 !important; }
+            .sidebar-r { grid-area: sidebar-r; }
         }
         @media (max-width: 600px) {
+            .navbar { padding-right: 8px; padding-left: 8px; }
             .search-box { display: none; }
-            .create-action-btn span { display: none; }
-            .post-action span { display: none; }
-            .chat-window { width: 300px; right: 10px; }
+            .nav-right { gap: 4px; }
+            .nav-right > .icon-btn { width: 34px; height: 34px; }
+            .nav-right > div { gap: 2px !important; }
+            .nav-right .user-pic { width: 34px; height: 34px; }
+            .nav-right > div > .icon-btn { width: 26px !important; height: 26px !important; }
+            .nav-center { justify-content: space-between; }
+            .nav-btn { max-width: none; padding: 3px 2px; border-radius: var(--radius-sm); }
+            .nav-btn svg { width: 19px; height: 19px; }
+            .nav-btn::after { font-size: 9px; }
+            .main { margin-top: 112px; padding: 0 10px; gap: 12px; }
+            .sidebar, .sidebar-r { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+            .card-pad { padding: 14px; }
+            .create-action-btn span, .post-action span { display: inline; }
+            .create-actions { gap: 4px; }
+            .create-action-btn { min-width: 0; flex: 1; padding: 8px 4px; gap: 5px; font-size: 11px; }
+            .create-action-btn svg { width: 18px; height: 18px; flex: 0 0 auto; }
+            .post-action { gap: 5px; padding: 9px 4px; font-size: 12px; }
+            .chat-window { width: min(300px, calc(100vw - 20px)); right: 10px; }
+            .call-screen-toolbar { width: calc(100vw - 24px); justify-content: center; flex-wrap: wrap; bottom: 12px; }
+        }
+        @media (max-width: 360px) {
+            .navbar { padding-right: 6px; padding-left: 6px; }
+            .nav-left .hive-brand .logo-word { font-size: 18px; }
+            .nav-right { gap: 2px; }
+            .nav-right > .icon-btn { width: 30px; height: 30px; }
+            .nav-right .user-pic { width: 30px; height: 30px; }
+            .nav-btn::after { font-size: 8px; }
+            .main { padding-right: 8px; padding-left: 8px; }
         }
         /* ========== FIXED WEB CALCULATOR (اله حاسبه ثابته) ========== */
         .fixed-calc-wrapper {
@@ -1028,40 +1187,15 @@
         .calc-hist-expr { color: var(--text-secondary); }
         .calc-hist-res { font-weight: 700; color: var(--primary); text-align: right; }
     </style>
+    <link rel="stylesheet" href="css/hive-brand.css">
 </head>
 <body>
 
 <!-- ========== TOP NAVBAR ========== -->
 <nav class="navbar">
     <div class="nav-left">
-        <a href="index.html" class="logo" aria-label="Hive home">
-            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
-                <defs>
-                    <linearGradient id="hive-cell-gradient" x1="12" y1="7" x2="30" y2="31" gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#67e8f9"/>
-                        <stop offset=".45" stop-color="#6366f1"/>
-                        <stop offset="1" stop-color="#7c3aed"/>
-                    </linearGradient>
-                    <linearGradient id="hive-cell-side" x1="8" y1="8" x2="32" y2="33" gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#bfdbfe"/>
-                        <stop offset="1" stop-color="#8b5cf6"/>
-                    </linearGradient>
-                    <linearGradient id="hive-facet-light" x1="14" y1="12" x2="26" y2="20" gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#fff" stop-opacity=".78"/>
-                        <stop offset="1" stop-color="#fff" stop-opacity=".08"/>
-                    </linearGradient>
-                </defs>
-                <g stroke="url(#hive-cell-side)" stroke-width="1.35" stroke-linejoin="round">
-                    <path d="M12 3.5 18.5 7.25v7.5L12 18.5l-6.5-3.75v-7.5L12 3.5Z" fill="#60a5fa" fill-opacity=".18"/>
-                    <path d="M28 3.5 34.5 7.25v7.5L28 18.5l-6.5-3.75v-7.5L28 3.5Z" fill="#8b5cf6" fill-opacity=".2"/>
-                    <path d="M12 21.5 18.5 25.25v7.5L12 36.5l-6.5-3.75v-7.5L12 21.5Z" fill="#8b5cf6" fill-opacity=".2"/>
-                    <path d="M28 21.5 34.5 25.25v7.5L28 36.5l-6.5-3.75v-7.5L28 21.5Z" fill="#ec4899" fill-opacity=".16"/>
-                </g>
-                <path d="M20 10.5 28.25 15.25v9.5L20 29.5l-8.25-4.75v-9.5L20 10.5Z" fill="url(#hive-cell-gradient)" stroke="#e0e7ff" stroke-width="1.2" stroke-linejoin="round"/>
-                <path d="m20 10.5 8.25 4.75L20 20l-8.25-4.75L20 10.5Z" fill="url(#hive-facet-light)"/>
-                <path d="M20 20v9.5l8.25-4.75v-9.5L20 20Z" fill="#312e81" fill-opacity=".2"/>
-                <path d="M20 20v9.5l-8.25-4.75v-9.5L20 20Z" fill="#fff" fill-opacity=".12"/>
-            </svg>
+        <a href="index.html" class="logo hive-brand" aria-label="Hive home">
+            <img src="images/hive-logo.svg" alt="" aria-hidden="true">
             <span class="logo-word">Hive</span>
         </a>
         <div class="search-box">
@@ -1073,7 +1207,7 @@
 
     <!-- Center Navigation Tabs -->
     <div class="nav-center">
-        <button class="nav-btn active" onclick="location.href='index.html'" title="Home Feed">
+        <button class="nav-btn active" onclick="navigatePersistentPage('index.html')" title="Home Feed">
             <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
         </button>
         <button class="nav-btn" onclick="openWatchModal()" title="Watch Videos">
@@ -1082,12 +1216,12 @@
         <button class="nav-btn" onclick="openGroupsModal()" title="Groups">
             <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         </button>
-        <button class="nav-btn" onclick="location.href='profile.html'" title="My Profile Page">
+        <button class="nav-btn" onclick="navigatePersistentPage('profile.html')" title="My Profile Page">
             <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
         </button>
         <button class="nav-btn" id="btnNavNotif" onclick="toggleAppPopover('notifPopover')" title="Notifications">
             <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-            <span class="nav-badge" id="notifBadge" style="display:none;">0</span>
+            <span class="nav-badge" id="notifBadge" style="display:none;" aria-live="polite">0</span>
         </button>
     </div>
 
@@ -1112,7 +1246,7 @@
         <!-- Profile Avatar & Popover Menu -->
         <div style="display:flex;align-items:center;gap:4px;">
             <span class="nav-profile-effect-wrap" id="navProfileEffectWrap">
-                <img class="user-pic" id="navAvatarPic" src="" alt="User" onclick="location.href='profile.html'" title="My Profile (Click to View Profile)" style="cursor:pointer;border:2px solid var(--primary);">
+                <img class="user-pic" id="navAvatarPic" src="" alt="User" onclick="navigatePersistentPage('profile.html')" title="My Profile (Click to View Profile)" style="cursor:pointer;border:2px solid var(--primary);">
             </span>
             <button class="icon-btn" style="width:28px;height:28px;padding:3px;" onclick="toggleAppPopover('profilePopover')" title="Account Options">
                 <svg viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M7 10l5 5 5-5z"/></svg>
@@ -1139,7 +1273,7 @@
 
         <!-- Profile Menu Popover -->
         <div class="popover profile-menu" id="profilePopover">
-            <div class="profile-menu-user" onclick="location.href='profile.html'">
+            <div class="profile-menu-user" onclick="navigatePersistentPage('profile.html')">
                 <img class="user-pic" id="menuUserPic" src="" alt="User">
                 <div>
                     <strong id="menuName" style="font-size:15px;display:block;">User Name</strong>
@@ -1147,7 +1281,7 @@
                 </div>
             </div>
             <div style="height:1px;background:var(--border-light);margin:6px 0;"></div>
-            <button class="profile-menu-btn" onclick="location.href='profile.html'">
+            <button class="profile-menu-btn" onclick="navigatePersistentPage('profile.html')">
                 <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                 View Full Profile
             </button>
@@ -1180,13 +1314,13 @@
         <div class="card">
             <div class="profile-mini-cover" id="sideCover"></div>
             <div class="profile-mini-body">
-                <img class="profile-mini-avatar" id="sideAvatarPic" src="" alt="Profile" onclick="location.href='profile.html'">
-                <h3 id="sideName" onclick="location.href='profile.html'">User Name</h3>
+                <img class="profile-mini-avatar" id="sideAvatarPic" src="" alt="Profile" onclick="navigatePersistentPage('profile.html')">
+                <h3 id="sideName" onclick="navigatePersistentPage('profile.html')">User Name</h3>
                 <p id="sideBio">Welcome to Connectify!</p>
                 <div class="profile-mini-stats">
-                    <div onclick="location.href='profile.html'"><strong id="sidePostCount">0</strong><span>Posts</span></div>
+                    <div onclick="navigatePersistentPage('profile.html')"><strong id="sidePostCount">0</strong><span>Posts</span></div>
                     <div onclick="openFriendsModal()"><strong id="sideFriendsCount">0</strong><span>Friends</span></div>
-                    <div onclick="location.href='profile.html'"><strong>312</strong><span>Photos</span></div>
+                    <div onclick="navigatePersistentPage('profile.html')"><strong>312</strong><span>Photos</span></div>
                 </div>
             </div>
         </div>
@@ -1690,12 +1824,130 @@
 <!-- ========== TOAST NOTIFICATION ========== -->
 <div class="toast-msg" id="toast"><span id="toastText">Action completed</span></div>
 
+<iframe id="persistentPageFrame" title="Hive page"></iframe>
+
 <!-- ========================================================
      APPLICATION LOGIC: AI CONVERSATION ENGINE, DATA & STATE
      ======================================================== -->
 <script>
+const persistentPageFrame = document.getElementById('persistentPageFrame');
+let accountInitializationComplete = false;
+let pendingPersistentFrameUrl = null;
+
+function isPersistentSitePage(url) {
+    return url.origin === location.origin &&
+        ['index.html', 'profile.html', 'calculator.html'].includes(url.pathname.split('/').pop().toLowerCase());
+}
+
+function applyPersistentPage(url) {
+    const isHome = url.pathname.split('/').pop().toLowerCase() === 'index.html';
+    if (isHome) {
+        document.body.classList.remove('persistent-page-active');
+        persistentPageFrame.style.display = 'none';
+        if (persistentPageFrame.src && !persistentPageFrame.src.endsWith('about:blank')) {
+            pendingPersistentFrameUrl = 'about:blank';
+            persistentPageFrame.src = 'about:blank';
+        }
+        if (accountInitializationComplete) handlePersistentHomeRoute(url);
+        return;
+    }
+    document.body.classList.add('persistent-page-active');
+    persistentPageFrame.style.display = 'block';
+    let currentFrameUrl = null;
+    try {
+        currentFrameUrl = new URL(persistentPageFrame.contentWindow.location.href);
+    } catch (error) {
+        console.error('Could not read the current persistent page URL:', error);
+    }
+    if (currentFrameUrl &&
+        (!pendingPersistentFrameUrl || pendingPersistentFrameUrl === url.href) &&
+        currentFrameUrl.pathname === url.pathname && currentFrameUrl.search === url.search) {
+        pendingPersistentFrameUrl = null;
+        if (currentFrameUrl.hash !== url.hash) persistentPageFrame.contentWindow.location.hash = url.hash;
+    } else if (persistentPageFrame.src !== url.href) {
+        pendingPersistentFrameUrl = url.href;
+        persistentPageFrame.src = url.href;
+    }
+}
+
+function navigatePersistentPage(destination, replace = false) {
+    const url = new URL(destination, location.href);
+    if (!isPersistentSitePage(url)) return false;
+    if (url.href !== location.href) {
+        const method = replace ? 'replaceState' : 'pushState';
+        history[method]({ persistentPage: true }, '', `${url.pathname}${url.search}${url.hash}`);
+    }
+    applyPersistentPage(url);
+    return true;
+}
+
+function handlePersistentHomeRoute(url) {
+    const params = new URLSearchParams(url.search);
+    if (params.has('auth') && !currentAccount) openCreateUserModal();
+    if (params.has('chat') && currentAccount) {
+        openChat(params.get('chat'), { maximized: params.get('fullscreen') === '1' });
+    }
+}
+
+function handlePersistentPageLink(event) {
+    const anchor = event.target?.closest?.('a[href]') || null;
+    if (!anchor || event.defaultPrevented || event.button !== 0 ||
+        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+        anchor.target && anchor.target !== '_self' || anchor.hasAttribute('download')) return;
+    const url = new URL(anchor.href, location.href);
+    if (!isPersistentSitePage(url)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    navigatePersistentPage(url.href);
+}
+
+document.addEventListener('click', handlePersistentPageLink, true);
+persistentPageFrame.addEventListener('load', () => {
+    let frameUrl;
+    try {
+        frameUrl = new URL(persistentPageFrame.contentWindow.location.href);
+        persistentPageFrame.contentDocument.addEventListener('click', handlePersistentPageLink, true);
+    } catch (error) {
+        console.error('Could not connect persistent page navigation:', error);
+        return;
+    }
+    if (pendingPersistentFrameUrl) {
+        if (frameUrl.href !== pendingPersistentFrameUrl && pendingPersistentFrameUrl !== location.href) return;
+        pendingPersistentFrameUrl = null;
+    }
+    if (!isPersistentSitePage(frameUrl)) return;
+    if (frameUrl.href !== location.href) {
+        if (frameUrl.pathname.split('/').pop().toLowerCase() === 'index.html') {
+            navigatePersistentPage(frameUrl.href);
+        } else {
+            history.pushState({ persistentPage: true }, '', `${frameUrl.pathname}${frameUrl.search}${frameUrl.hash}`);
+            applyPersistentPage(frameUrl);
+        }
+    }
+});
+window.addEventListener('popstate', () => {
+    const url = new URL(location.href);
+    if (isPersistentSitePage(url)) applyPersistentPage(url);
+});
+
 // Storage Keys
 const POSTS_KEY = 'socialvibe_posts';
+const REACTION_EMOJIS = Object.freeze({
+    like: '👍', love: '❤️', haha: '😂', wow: '😮', sad: '😢', angry: '😡',
+    celebrate: '🎉', clap: '👏', fire: '🔥', think: '🤔', smile: '😊',
+    laugh: '😆', cry: '😭', cool: '😎', party: '🥳', pray: '🙏',
+    hundred: '💯', eyes: '👀', heart_eyes: '😍', wink: '😉', grin: '😁',
+    hug: '🤗', rocket: '🚀', sparkles: '✨'
+});
+const REACTION_LABELS = Object.freeze({
+    like: 'Like', love: 'Heart', haha: 'Laugh', wow: 'Wow', sad: 'Sad',
+    angry: 'Angry', celebrate: 'Celebrate', clap: 'Clap', fire: 'Fire',
+    think: 'Think', smile: 'Smile', laugh: 'Laugh', cry: 'Cry', cool: 'Cool',
+    party: 'Party', pray: 'Pray', hundred: '100', eyes: 'Eyes',
+    heart_eyes: 'Heart eyes', wink: 'Wink', grin: 'Grin', hug: 'Hug',
+    rocket: 'Rocket', sparkles: 'Sparkles'
+});
+const FULL_REACTION_KEYS = Object.keys(REACTION_EMOJIS);
 const PROFILE_KEY = 'socialvibe_profile';
 const USERS_KEY = 'socialvibe_users';
 const SAVED_KEY = 'socialvibe_saved';
@@ -1771,7 +2023,7 @@ function mapDatabasePost(post) {
         image: post.image || null,
         likes: Number(post.likes_count || 0),
         liked: Boolean(post.liked),
-        reaction: post.liked ? 'like' : null,
+        reaction: post.liked ? (post.my_reaction || 'like') : null,
         comments: (post.comments || []).map(comment => ({
             id: Number(comment.id),
             author: comment.author,
@@ -2037,6 +2289,8 @@ let currentTagFilter = null;
 let feedPoller = null;
 let feedRefreshInFlight = false;
 let renderedFeedSignature = '';
+let notificationPoller = null;
+let notificationRefreshInFlight = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
@@ -2065,6 +2319,11 @@ function closeTransientPopupsOnOutsideClick(event) {
 
     const messageMenu = document.getElementById('messageContextMenu');
     if (messageMenu && !messageMenu.contains(target)) messageMenu.remove();
+    if (!target.closest('.emoji-picker-panel') &&
+        !target.closest('.message-more-reactions') &&
+        !target.closest('.post-more-reactions')) {
+        document.querySelectorAll('.emoji-picker-panel').forEach(picker => picker.remove());
+    }
 
     Object.entries(activeChats).forEach(([chatId]) => {
         const chatBox = document.getElementById(`chatBox-${chatId}`);
@@ -2075,10 +2334,17 @@ function closeTransientPopupsOnOutsideClick(event) {
         closeAllPopovers();
     }
     if (!target.closest('.post-menu-trigger') && !target.closest('.post-dropdown')) {
-        document.querySelectorAll('.post-dropdown.open').forEach(dropdown => dropdown.classList.remove('open'));
+        document.querySelectorAll('.post-dropdown.open').forEach(dropdown => {
+            dropdown.classList.remove('open');
+            dropdown.closest('.post')?.classList.remove('post-menu-open');
+        });
     }
-    if (!target.closest('.post-action') && !target.closest('.reactions-box')) {
-        document.querySelectorAll('.reactions-box.show').forEach(reactions => reactions.classList.remove('show'));
+    if (!target.closest('.post-action') && !target.closest('.reactions-box') &&
+        !target.closest('.emoji-picker-panel')) {
+        document.querySelectorAll('.reactions-box.show').forEach(reactions => {
+            reactions.classList.remove('show');
+            reactions.closest('.post')?.classList.remove('post-reaction-open');
+        });
     }
 
     document.querySelectorAll('.call-participant-menu:not([hidden])').forEach(menu => {
@@ -2149,6 +2415,8 @@ async function initializeAccount() {
     renderMessagesPopover();
     updateBadges();
     if (currentAccount) {
+        if (notificationPoller) clearInterval(notificationPoller);
+        notificationPoller = setInterval(refreshNotifications, 4000);
         if (callPoller) clearInterval(callPoller);
         callPoller = setInterval(pollCalls, 2000);
         pollCalls();
@@ -2164,11 +2432,8 @@ async function initializeAccount() {
             refreshPresence();
         }, PRESENCE_POLL_INTERVAL);
     }
-    const params = new URLSearchParams(location.search);
-    if (params.has('auth') && !currentAccount) openCreateUserModal();
-    if (params.has('chat') && currentAccount) {
-        openChat(params.get('chat'), { maximized: params.get('fullscreen') === '1' });
-    }
+    accountInitializationComplete = true;
+    handlePersistentHomeRoute(new URL(location.href));
 }
 
 function getPresenceClientId() {
@@ -2330,15 +2595,23 @@ function applyHomeProfileEffect(selectedEffect) {
 
 function updateBadges() {
     const notifs = getNotifications();
-    const unreadMessages = notifs.filter(notification => notification.type === 'message').length;
+    const unreadMessages = notifs.reduce((total, notification) => notification.type === 'message'
+        ? total + Number(notification.unread_count || 1)
+        : total, 0);
+    const unreadNotifications = unreadMessages
+        + notifs.filter(notification => notification.type !== 'message').length;
     const notifBadge = document.getElementById('notifBadge');
     if (notifBadge) {
-        notifBadge.textContent = notifs.length;
-        notifBadge.style.display = notifs.length > 0 ? 'flex' : 'none';
+        notifBadge.textContent = unreadNotifications > 99 ? '99+' : String(unreadNotifications);
+        notifBadge.style.display = unreadNotifications > 0 ? 'flex' : 'none';
+        const label = unreadNotifications
+            ? `${unreadNotifications} unread notification${unreadNotifications === 1 ? '' : 's'}`
+            : 'Notifications';
+        document.getElementById('btnNavNotif')?.setAttribute('aria-label', label);
     }
     const messageBadge = document.getElementById('msgBadge');
     if (messageBadge) {
-        messageBadge.textContent = unreadMessages;
+        messageBadge.textContent = unreadMessages > 99 ? '99+' : String(unreadMessages);
         messageBadge.style.display = unreadMessages > 0 ? 'flex' : 'none';
     }
 
@@ -2594,8 +2867,22 @@ function renderMessageItems(messages, isGroup = false, chatId = '') {
             ${replyText ? `<div class="message-reply">${replyText}</div>` : ''}
             <span class="message-text">${escapeHtml(message.content || '')}</span>${edited}
             <div class="message-attachment">${renderMessageAttachment(message)}</div>
+            ${renderMessageReactions(message, chatId)}
         </div>`;
     }).join('');
+}
+
+function renderMessageReactions(message, chatId) {
+    const reactions = (message.reactions || []).filter(item => REACTION_EMOJIS[item.reaction]);
+    if (!reactions.length) return '<div class="message-reactions" hidden></div>';
+    return `<div class="message-reactions">${reactions.map(item => `
+        <button type="button" class="message-reaction ${item.reacted_by_me ? 'reacted' : ''}"
+            data-reaction="${item.reaction}" data-reacted="${item.reacted_by_me ? 'true' : 'false'}"
+            onclick="toggleChatReaction('${escapeHtml(chatId)}', ${Number(message.id)}, '${item.reaction}')"
+            aria-label="${REACTION_LABELS[item.reaction]} ${Number(item.count)}">
+            <span>${REACTION_EMOJIS[item.reaction]}</span><span>${Number(item.count)}</span>
+        </button>
+    `).join('')}</div>`;
 }
 
 function messageAttachmentKey(message) {
@@ -2670,6 +2957,12 @@ function syncChatMessages(container, messages, isGroup, chatId) {
             if (attachment) attachment.innerHTML = renderMessageAttachment(message);
             node.dataset.attachmentKey = attachmentKey;
         }
+        const reactionTemplate = document.createElement('template');
+        reactionTemplate.innerHTML = renderMessageReactions(message, chatId);
+        const reactionNode = reactionTemplate.content.firstElementChild;
+        const existingReactions = node.querySelector('.message-reactions');
+        if (existingReactions && reactionNode) existingReactions.replaceWith(reactionNode);
+        else if (reactionNode) node.querySelector('.message-attachment')?.after(reactionNode);
     });
     if (wasNearBottom) container.scrollTop = container.scrollHeight;
 }
@@ -2779,8 +3072,37 @@ function showMessageMenu(event) {
     const menu = document.createElement('div');
     menu.id = 'messageContextMenu';
     menu.className = 'message-context-menu';
-    menu.style.left = `${Math.min(event.clientX, window.innerWidth - 165)}px`;
-    menu.style.top = `${Math.min(event.clientY, window.innerHeight - 120)}px`;
+    const reactionTray = document.createElement('div');
+    reactionTray.className = 'message-reaction-tray';
+    [
+        ['like', 'Like'],
+        ['love', 'Heart'],
+        ['haha', 'Laugh'],
+        ['wow', 'Wow']
+    ].forEach(([reaction, label]) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = REACTION_EMOJIS[reaction];
+        button.title = label;
+        button.setAttribute('aria-label', `React with ${label}`);
+        button.addEventListener('click', () => {
+            menu.remove();
+            toggleChatReaction(chatId, messageId, reaction);
+        });
+        reactionTray.appendChild(button);
+    });
+    const moreButton = document.createElement('button');
+    moreButton.type = 'button';
+    moreButton.className = 'message-more-reactions';
+    moreButton.textContent = '+';
+    moreButton.title = 'More emoji';
+    moreButton.setAttribute('aria-label', 'Open full emoji picker');
+    moreButton.addEventListener('click', () => openFullEmojiPicker(moreButton, (reaction) => {
+        menu.remove();
+        toggleChatReaction(chatId, messageId, reaction);
+    }));
+    reactionTray.appendChild(moreButton);
+    menu.appendChild(reactionTray);
     const actions = [{ label: 'Reply to', action: 'reply' }];
     if (message.classList.contains('msg-me')) {
         actions.push({ label: 'Edit message', action: 'edit' }, { label: 'Delete message', action: 'delete' });
@@ -2798,6 +3120,51 @@ function showMessageMenu(event) {
         menu.appendChild(button);
     });
     document.body.appendChild(menu);
+    const menuRect = menu.getBoundingClientRect();
+    menu.style.left = `${Math.max(8, Math.min(event.clientX, window.innerWidth - menuRect.width - 8))}px`;
+    menu.style.top = `${Math.max(8, Math.min(event.clientY, window.innerHeight - menuRect.height - 8))}px`;
+}
+
+function openFullEmojiPicker(anchor, onSelect, pickerClass = '') {
+    document.querySelectorAll('.emoji-picker-panel').forEach(picker => picker.remove());
+    const picker = document.createElement('div');
+    picker.className = `emoji-picker-panel ${pickerClass}`.trim();
+    picker.setAttribute('role', 'dialog');
+    picker.setAttribute('aria-label', 'Emoji picker');
+    picker.innerHTML = '<div class="emoji-picker-title">Choose a reaction</div><div class="emoji-picker-grid"></div>';
+    const grid = picker.querySelector('.emoji-picker-grid');
+    FULL_REACTION_KEYS.forEach(reaction => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = REACTION_EMOJIS[reaction];
+        button.title = REACTION_LABELS[reaction];
+        button.setAttribute('aria-label', REACTION_LABELS[reaction]);
+        button.addEventListener('click', () => {
+            picker.remove();
+            onSelect(reaction);
+        });
+        grid.appendChild(button);
+    });
+    document.body.appendChild(picker);
+    const anchorRect = anchor.getBoundingClientRect();
+    const pickerRect = picker.getBoundingClientRect();
+    picker.style.left = `${Math.max(8, Math.min(anchorRect.left, window.innerWidth - pickerRect.width - 8))}px`;
+    picker.style.top = `${Math.max(8, Math.min(anchorRect.top - pickerRect.height - 8, window.innerHeight - pickerRect.height - 8))}px`;
+}
+
+async function toggleChatReaction(chatId, messageId, reaction) {
+    const node = document.querySelector(`#msgs-${chatId} [data-message-id="${Number(messageId)}"]`);
+    if (!node || !requireSignedIn()) return;
+    const selected = node.querySelector(`.message-reaction[data-reaction="${reaction}"]`)?.dataset.reacted === 'true';
+    try {
+        await chatApi('message_actions.php', {
+            method: 'POST',
+            body: { action: 'react', message_id: Number(messageId), reaction: selected ? '' : reaction }
+        });
+        await refreshChatMessages(chatId);
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 async function editChatMessage(chatId, messageId) {
@@ -2966,6 +3333,7 @@ const callNotifications = new Map();
 let ringtoneAudioContext = null;
 let ringtoneInterval = null;
 let screenShareStream = null;
+let callScreenZoom = 1;
 let callNoiseSuppressionEnabled = true;
 
 function getCallAudioConstraints(mediaType) {
@@ -3160,6 +3528,7 @@ async function startChatCall(chatId, mediaType) {
         activeCallId = String(result.call_id);
         activeCallInfo = {
             id: activeCallId,
+            chatId,
             call_type: conversation.type === 'group' ? 'group' : 'direct',
             media_type: mediaType,
             group_id: conversation.type === 'group' ? Number(conversation.id) : null,
@@ -3203,7 +3572,7 @@ async function acceptIncomingCall(callId) {
         const call = (calls.calls || []).find(item => String(item.id) === callId);
         if (!call) throw new Error('This call has ended.');
         if (String(activeCallId) === callId) return;
-            if (activeCallId && !await leaveActiveCall()) return;
+        if (activeCallId && !await leaveActiveCall()) return;
         localCallStream = await navigator.mediaDevices.getUserMedia(getCallAudioConstraints(call.media_type));
         const noiseSuppression = localCallStream.getAudioTracks()[0]?.getSettings?.().noiseSuppression;
         if (typeof noiseSuppression === 'boolean') callNoiseSuppressionEnabled = noiseSuppression;
@@ -3212,6 +3581,7 @@ async function acceptIncomingCall(callId) {
             body: { action: 'join', call_id: callId }
         });
         activeCallId = callId;
+        call.chatId = callChatId(call);
         activeCallInfo = call;
         renderActiveCall();
         startCallAudioMeter(Number(currentAccount.id), localCallStream, true);
@@ -3246,8 +3616,9 @@ async function pollCalls() {
         for (const call of result.calls || []) {
             const chatId = callChatId(call);
             if (chatId) activeCallsByChat.set(chatId, call);
-            if (call.my_status === 'ringing' && !call.my_joined_before &&
-                Number(call.started_by) !== Number(currentAccount.id)) {
+            if (call.my_status === 'left' ||
+                (call.my_status === 'ringing' && !call.my_joined_before &&
+                    Number(call.started_by) !== Number(currentAccount.id))) {
                 renderCallInvite(call);
             } else {
                 dismissCallInvite(call.id);
@@ -3281,7 +3652,7 @@ async function pollCalls() {
 
 function renderCallInvite(call) {
     const id = String(call.id);
-    notifyIncomingCall(call);
+    if (call.my_status !== 'left') notifyIncomingCall(call);
     if (document.getElementById(`call-invite-${id}`)) return;
     const invite = document.createElement('div');
     invite.className = 'call-invite';
@@ -3291,9 +3662,11 @@ function renderCallInvite(call) {
     const text = document.createElement('div');
     text.className = 'call-invite-copy';
     const title = document.createElement('strong');
-    title.textContent = call.call_type === 'group'
-        ? `${call.starter_name} is calling the group`
-        : `${call.starter_name} is calling you`;
+    title.textContent = call.my_status === 'left'
+        ? 'Call is still in progress'
+        : call.call_type === 'group'
+            ? `${call.starter_name} is calling the group`
+            : `${call.starter_name} is calling you`;
     const mode = document.createElement('small');
     mode.textContent = `${call.media_type === 'video' ? 'Video' : 'Voice'} call${call.group_name ? ` · ${call.group_name}` : ''}`;
     text.append(title, mode);
@@ -3333,20 +3706,28 @@ function renderActiveCall() {
         const panel = document.createElement('div');
         panel.className = `call-panel ${activeCallInfo.media_type === 'audio' ? 'call-audio-only' : ''}`;
         panel.innerHTML = `
-            <h3 id="callTitle"></h3>
-            <p id="callStatus"></p>
+            <div class="call-panel-header">
+                <div class="call-panel-heading">
+                    <h3 id="callTitle"></h3>
+                    <p id="callStatus"></p>
+                </div>
+                <div class="call-window-controls">
+                    <button type="button" onclick="setCallWindowMinimized(true)" aria-label="Minimize call window" title="Minimize call window">−</button>
+                    <button type="button" onclick="setCallWindowMinimized(false)" aria-label="Restore call window" title="Restore call window" hidden>□</button>
+                </div>
+            </div>
             <div class="call-video-grid" id="callVideoGrid"></div>
-            <div style="display:flex;gap:8px;justify-content:center;">
+            <div class="call-controls" style="display:flex;gap:8px;justify-content:center;">
                 <button type="button" onclick="toggleCallMicrophone()" class="btn-post">Mute microphone</button>
-                <button type="button" onclick="toggleCallNoiseSuppression()" class="btn-post" aria-pressed="${callNoiseSuppressionEnabled}">Noise suppression: ${callNoiseSuppressionEnabled ? 'On' : 'Off'}</button>
+                <button type="button" onclick="toggleCallNoiseSuppression()" class="btn-post call-noise-control" aria-pressed="${callNoiseSuppressionEnabled}">Noise suppression: ${callNoiseSuppressionEnabled ? 'On' : 'Off'}</button>
                 <button type="button" onclick="toggleCallScreenShare()" class="btn-post">Share screen</button>
                 ${activeCallInfo.media_type === 'video' ? '<button type="button" onclick="toggleCallCamera()" class="btn-post">Turn camera off</button>' : ''}
                 <button type="button" onclick="leaveActiveCall()" class="btn-post" style="background:#ef4444;">Leave call</button>
-                ${Number(activeCallInfo.started_by) === Number(currentAccount.id) ? '<button type="button" onclick="endActiveCall()" class="btn-post" style="background:#991b1b;">End for everyone</button>' : ''}
             </div>
         `;
         overlay.appendChild(panel);
         document.body.appendChild(overlay);
+        setupCallWindowDragging(panel, panel.querySelector('.call-panel-header'));
         const localTile = makeCallTile({
             id: Number(currentAccount.id),
             name: 'You',
@@ -3390,11 +3771,157 @@ function renderActiveCall() {
         is_muted: Boolean(activeCallInfo.my_is_muted)
     }, screenShareStream || localCallStream, true, activeCallInfo.media_type);
     document.getElementById('callTile-local')?.classList.toggle('is-sharing-screen', Boolean(screenShareStream));
+    const minimizeButton = overlay?.querySelector('.call-window-controls button[aria-label="Minimize call window"]');
+    const restoreButton = overlay?.querySelector('.call-window-controls button[aria-label="Restore call window"]');
+    if (minimizeButton && restoreButton) {
+        minimizeButton.hidden = overlay.classList.contains('is-minimized');
+        restoreButton.hidden = !overlay.classList.contains('is-minimized');
+    }
     for (const [peerId, stream] of callRemoteStreams) {
         const participant = (activeCallInfo.participants || []).find(item => Number(item.id) === Number(peerId));
         if (participant) updateCallTile(participant, stream, false, activeCallInfo.media_type);
     }
 }
+
+function setCallWindowMinimized(minimized) {
+    const overlay = document.getElementById('activeCallOverlay');
+    const panel = overlay?.querySelector('.call-panel');
+    if (!overlay || !panel) return;
+    overlay.classList.toggle('is-minimized', minimized);
+    document.body.classList.toggle('call-window-replaced', minimized);
+    const minimizeButton = overlay.querySelector('.call-window-controls button[aria-label="Minimize call window"]');
+    const restoreButton = overlay.querySelector('.call-window-controls button[aria-label="Restore call window"]');
+    if (minimizeButton) minimizeButton.hidden = minimized;
+    if (restoreButton) restoreButton.hidden = !minimized;
+    if (minimized) {
+        const cover = document.querySelector('.profile-mini-cover');
+        const coverRect = cover?.getBoundingClientRect();
+        const left = coverRect?.width ? coverRect.left : 16;
+        const top = coverRect?.height ? coverRect.top : 16;
+        const maxLeft = Math.max(0, window.innerWidth - panel.offsetWidth);
+        const maxTop = Math.max(0, window.innerHeight - panel.offsetHeight);
+        panel.style.left = `${Math.min(maxLeft, Math.max(0, left))}px`;
+        panel.style.top = `${Math.min(maxTop, Math.max(0, top))}px`;
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+    } else {
+        panel.style.position = '';
+        panel.style.left = '';
+        panel.style.top = '';
+        panel.style.right = '';
+        panel.style.bottom = '';
+    }
+}
+
+function setupCallWindowDragging(panel, handle) {
+    if (!panel || !handle) return;
+    let drag = null;
+    handle.addEventListener('pointerdown', event => {
+        if (event.button !== 0 || event.target.closest('button') ||
+            !document.getElementById('activeCallOverlay')?.classList.contains('is-minimized')) return;
+        const rect = panel.getBoundingClientRect();
+        drag = { pointerId: event.pointerId, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top };
+        panel.style.position = 'fixed';
+        panel.style.left = `${rect.left}px`;
+        panel.style.top = `${rect.top}px`;
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+        handle.setPointerCapture(event.pointerId);
+        event.preventDefault();
+    });
+    handle.addEventListener('pointermove', event => {
+        if (!drag || drag.pointerId !== event.pointerId) return;
+        const maxLeft = Math.max(0, window.innerWidth - panel.offsetWidth);
+        const maxTop = Math.max(0, window.innerHeight - panel.offsetHeight);
+        panel.style.left = `${Math.min(maxLeft, Math.max(0, event.clientX - drag.offsetX))}px`;
+        panel.style.top = `${Math.min(maxTop, Math.max(0, event.clientY - drag.offsetY))}px`;
+    });
+    const finishDrag = event => {
+        if (drag?.pointerId === event.pointerId) drag = null;
+    };
+    handle.addEventListener('pointerup', finishDrag);
+    handle.addEventListener('pointercancel', finishDrag);
+}
+
+function openCallScreenViewer(peerId) {
+    const local = Number(peerId) === Number(currentAccount?.id);
+    const stream = local ? screenShareStream : callRemoteStreams.get(Number(peerId));
+    const videoTrack = stream?.getVideoTracks().find(track => track.readyState === 'live');
+    if (!videoTrack) {
+        toast('The shared screen is not available yet.');
+        return;
+    }
+    closeCallScreenViewer();
+    callScreenZoom = 1;
+    const viewer = document.createElement('div');
+    viewer.className = 'call-screen-viewer';
+    viewer.id = 'callScreenViewer';
+    viewer.setAttribute('role', 'dialog');
+    viewer.setAttribute('aria-label', 'Shared screen');
+    const video = document.createElement('video');
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = true;
+    video.srcObject = stream;
+    const toolbar = document.createElement('div');
+    toolbar.className = 'call-screen-toolbar';
+    toolbar.innerHTML = `
+        <button type="button" aria-label="Zoom out" title="Zoom out">−</button>
+        <span class="call-screen-zoom-value">100%</span>
+        <button type="button" aria-label="Zoom in" title="Zoom in">+</button>
+        <button type="button" aria-label="Reset zoom" title="Reset zoom">Reset</button>
+        <button type="button" aria-label="Fullscreen shared screen" title="Fullscreen shared screen">Fullscreen</button>
+        <button type="button" aria-label="Close shared screen" title="Close shared screen">×</button>
+    `;
+    const [zoomOut, zoomIn, resetZoom, fullscreen, close] = toolbar.querySelectorAll('button');
+    const applyZoom = () => {
+        viewer.style.setProperty('--call-screen-zoom', String(callScreenZoom));
+        toolbar.querySelector('.call-screen-zoom-value').textContent = `${Math.round(callScreenZoom * 100)}%`;
+    };
+    zoomOut.addEventListener('click', () => {
+        callScreenZoom = Math.max(1, Math.round((callScreenZoom - 0.25) * 100) / 100);
+        applyZoom();
+    });
+    zoomIn.addEventListener('click', () => {
+        callScreenZoom = Math.min(3, Math.round((callScreenZoom + 0.25) * 100) / 100);
+        applyZoom();
+    });
+    resetZoom.addEventListener('click', () => {
+        callScreenZoom = 1;
+        applyZoom();
+    });
+    fullscreen.addEventListener('click', async () => {
+        if (document.fullscreenElement === viewer) {
+            await document.exitFullscreen();
+        } else if (viewer.requestFullscreen) {
+            try {
+                await viewer.requestFullscreen();
+            } catch (error) {
+                toast(`Could not enter fullscreen: ${error.message}`);
+            }
+        }
+    });
+    close.addEventListener('click', closeCallScreenViewer);
+    viewer.append(video, toolbar);
+    document.body.appendChild(viewer);
+    video.play().catch(error => {
+        if (error.name !== 'AbortError') console.warn('Shared screen playback could not start:', error);
+    });
+}
+
+function closeCallScreenViewer() {
+    const viewer = document.getElementById('callScreenViewer');
+    if (!viewer) return;
+    if (document.fullscreenElement === viewer) document.exitFullscreen().catch(error => {
+        console.warn('Could not exit shared screen fullscreen:', error);
+    });
+    viewer.remove();
+    callScreenZoom = 1;
+}
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeCallScreenViewer();
+});
 
 function callStatusText(call) {
     const joined = (call.participants || []).filter(participant => participant.status === 'joined').length;
@@ -3441,7 +3968,16 @@ function makeCallTile(participant, stream, isLocal, mediaType) {
     const shareLabel = document.createElement('span');
     shareLabel.className = 'call-share-label';
     shareLabel.textContent = 'Sharing screen';
-    tile.append(avatar, player, audio, shareLabel, label);
+    const screenViewButton = document.createElement('button');
+    screenViewButton.type = 'button';
+    screenViewButton.className = 'call-screen-view-btn';
+    screenViewButton.textContent = 'Expand screen';
+    screenViewButton.setAttribute('aria-label', `Expand ${participant.name || 'participant'}'s shared screen`);
+    screenViewButton.addEventListener('click', event => {
+        event.stopPropagation();
+        openCallScreenViewer(isLocal ? Number(currentAccount.id) : Number(participant.id));
+    });
+    tile.append(avatar, player, audio, shareLabel, label, screenViewButton);
     if (participant.is_muted) tile.classList.add('is-muted');
     if (participant.is_sharing_screen) tile.classList.add('is-sharing-screen');
     if (!isLocal && participant.status !== 'joined') tile.classList.add('is-waiting');
@@ -3546,6 +4082,7 @@ function syncCallTileVideo(tile, stream, isLocal, participant) {
     if (audio && audio.srcObject !== (!isLocal && stream ? stream : null)) audio.srcObject = !isLocal && stream ? stream : null;
     if (player) player.style.display = videoTrack ? 'block' : 'none';
     if (avatar) avatar.style.display = videoTrack ? 'none' : 'flex';
+    tile.classList.toggle('is-sharing-screen', Boolean(isLocal ? screenShareStream : participant?.is_sharing_screen));
 }
 
 function updateCallTile(participant, stream, isLocal = false, mediaType = 'audio') {
@@ -3920,7 +4457,7 @@ async function leaveActiveCall() {
     try {
         await chatApi('calls.php', {
             method: 'POST',
-            body: { action: 'leave', call_id: callId, end_call: false }
+            body: { action: 'leave', call_id: callId }
         });
     } catch (error) {
         toast(error.message);
@@ -3929,26 +4466,6 @@ async function leaveActiveCall() {
     closeActiveCall();
     pollCalls();
     return true;
-}
-
-async function endActiveCall() {
-    if (!activeCallId) return;
-    const callId = activeCallId;
-    try {
-        await chatApi('calls.php', {
-            method: 'POST',
-            body: {
-                action: 'leave',
-                call_id: callId,
-                end_call: true
-            }
-        });
-    } catch (error) {
-        toast(error.message);
-        return;
-    }
-    closeActiveCall();
-    pollCalls();
 }
 
 function stopLocalCallMedia() {
@@ -3963,6 +4480,7 @@ function stopLocalCallMedia() {
 }
 
 function closeActiveCall() {
+    const closedCallId = String(activeCallId);
     for (const connection of callPeerConnections.values()) connection.close();
     callPeerConnections.clear();
     [...callAudioMeters.keys()].forEach(stopCallAudioMeter);
@@ -3971,9 +4489,15 @@ function closeActiveCall() {
     callPendingCandidates.clear();
     callOfferSent.clear();
     stopLocalCallMedia();
+    closeCallScreenViewer();
+    document.body.classList.remove('call-window-replaced');
     document.getElementById('activeCallOverlay')?.remove();
+    for (const [chatId, call] of activeCallsByChat) {
+        if (String(call.id) === closedCallId) activeCallsByChat.delete(chatId);
+    }
     activeCallId = null;
     activeCallInfo = null;
+    Object.values(activeChats).forEach(syncChatCallButtons);
 }
 
 // Realistic Conversational AI Engine
@@ -4110,6 +4634,18 @@ function handleAccountAction() {
 }
 
 // ==================== NOTIFICATIONS & MESSAGES POPOVERS ====================
+async function refreshNotifications() {
+    if (!currentAccount || notificationRefreshInFlight) return;
+    notificationRefreshInFlight = true;
+    try {
+        await renderNotificationsPopover();
+    } catch (error) {
+        console.warn('Could not refresh notifications:', error);
+    } finally {
+        notificationRefreshInFlight = false;
+    }
+}
+
 async function renderNotificationsPopover() {
     const list = document.getElementById('notifList');
     if (!list) return;
@@ -4136,10 +4672,14 @@ async function renderNotificationsPopover() {
         <div class="popover-item unread" onclick="handleNotificationClick('${notification.type}', ${Number(notification.user_id)})">
             <img class="popover-avatar" src="${escapeHtml(notification.avatar || DEFAULT_AVATAR)}" alt="${escapeHtml(notification.display_name)}">
             <div class="popover-info">
-                <strong>${escapeHtml(notification.display_name)}</strong>
-                <span>${escapeHtml(notification.text)} · @${escapeHtml(notification.username)}</span>
+                <strong>@${escapeHtml(notification.username || notification.display_name)}</strong>
+                ${notification.type === 'message'
+                    ? `<span class="notification-preview">${escapeHtml(notification.preview || 'New message')}</span>`
+                    : `<span>${escapeHtml(notification.text)}</span>`}
             </div>
-            <div class="unread-dot"></div>
+            ${notification.type === 'message'
+                ? `<span class="notification-count" aria-label="${Number(notification.unread_count) || 1} unread messages">${Number(notification.unread_count) || 1}</span>`
+                : '<div class="unread-dot"></div>'}
         </div>
     `).join('');
 }
@@ -4431,8 +4971,11 @@ function renderSinglePost(p, isSaved) {
     const isLiked = p.liked;
     let reactText = 'Like';
     let reactClass = '';
-    if (p.reaction === 'love') { reactText = 'Love ❤️'; reactClass = 'liked-love'; }
-    else if (isLiked) { reactText = 'Liked 👍'; reactClass = 'liked'; }
+    if (isLiked) {
+        const reaction = p.reaction || 'like';
+        reactText = `${REACTION_LABELS[reaction] || 'Like'} ${REACTION_EMOJIS[reaction] || REACTION_EMOJIS.like}`;
+        reactClass = reaction === 'love' ? 'liked-love' : 'liked';
+    }
 
     const me = getProfile();
     const isMe = p.isOwn || (p.author && me.name && p.author.toLowerCase() === me.name.toLowerCase());
@@ -4469,10 +5012,10 @@ function renderSinglePost(p, isSaved) {
                         <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                         Copy Link
                     </button>
-                    <button class="text-red" onclick="event.stopPropagation(); deletePost(${p.id})">
+                    ${p.isOwn ? `<button class="text-red" onclick="event.stopPropagation(); deletePost(${p.id})">
                         <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                         Delete Post
-                    </button>
+                    </button>` : ''}
                 </div>
             </div>
         </div>
@@ -4497,13 +5040,14 @@ function renderSinglePost(p, isSaved) {
 
         <div class="post-action-bar">
             <!-- Floating Reactions Bar -->
-            <div class="reactions-box" id="reactBox-${p.id}">
-                <span class="react-btn" onclick="selectReaction(${p.id}, 'like', '👍 Like')">👍</span>
-                <span class="react-btn" onclick="selectReaction(${p.id}, 'love', '❤️ Love')">❤️</span>
-                <span class="react-btn" onclick="selectReaction(${p.id}, 'haha', '😂 Haha')">😂</span>
-                <span class="react-btn" onclick="selectReaction(${p.id}, 'wow', '😮 Wow')">😮</span>
-                <span class="react-btn" onclick="selectReaction(${p.id}, 'sad', '😢 Sad')">😢</span>
-                <span class="react-btn" onclick="selectReaction(${p.id}, 'angry', '😡 Angry')">😡</span>
+            <div class="reactions-box post-reactions-box" id="reactBox-${p.id}">
+                <button type="button" aria-label="Like" title="Like" onclick="selectReaction(${p.id}, 'like')">👍</button>
+                <button type="button" aria-label="Heart" title="Heart" onclick="selectReaction(${p.id}, 'love')">❤️</button>
+                <button type="button" aria-label="Laugh" title="Laugh" onclick="selectReaction(${p.id}, 'haha')">😂</button>
+                <button type="button" aria-label="Wow" title="Wow" onclick="selectReaction(${p.id}, 'wow')">😮</button>
+                <button type="button" aria-label="Sad" title="Sad" onclick="selectReaction(${p.id}, 'sad')">😢</button>
+                <button type="button" aria-label="Angry" title="Angry" onclick="selectReaction(${p.id}, 'angry')">😡</button>
+                <button type="button" class="post-more-reactions" aria-label="Open full emoji picker" title="More emoji" onclick="openPostEmojiPicker(${p.id}, this)">+</button>
             </div>
 
             <button class="post-action ${reactClass}" 
@@ -4547,7 +5091,7 @@ async function togglePostLike(id) {
         const result = await postsApi('likes', { method: 'POST', body: { post_id: id } });
         p.liked = result.liked;
         p.likes = result.likes_count;
-        p.reaction = p.liked ? 'like' : null;
+        p.reaction = result.reaction;
         renderFeed();
         if (p.liked) toast('Post liked! 👍');
     } catch (error) {
@@ -4556,25 +5100,37 @@ async function togglePostLike(id) {
 }
 
 function showReactionsBox(id) {
-    document.querySelectorAll('.reactions-box').forEach(r => r.classList.remove('show'));
+    document.querySelectorAll('.reactions-box').forEach(r => {
+        r.classList.remove('show');
+        r.closest('.post')?.classList.remove('post-reaction-open');
+        r.querySelector('.post-emoji-picker')?.remove();
+    });
     const box = document.getElementById(`reactBox-${id}`);
-    if (box) box.classList.add('show');
+    if (box) {
+        box.classList.add('show');
+        box.closest('.post')?.classList.add('post-reaction-open');
+    }
 }
 
-async function selectReaction(id, type, label) {
+function openPostEmojiPicker(postId, anchor) {
+    openFullEmojiPicker(anchor, reaction => selectReaction(postId, reaction), 'post-emoji-picker-panel');
+}
+
+async function selectReaction(id, type) {
     const posts = getPosts();
     const p = posts.find(x => x.id === id);
     if (!p) return;
     if (!requireSignedIn()) return;
     try {
-        if (!p.liked) {
-            const result = await postsApi('likes', { method: 'POST', body: { post_id: id } });
-            p.liked = result.liked;
-            p.likes = result.likes_count;
-        }
-        p.reaction = type;
+        const result = await postsApi('likes', {
+            method: 'POST',
+            body: { post_id: id, reaction: type }
+        });
+        p.liked = result.liked;
+        p.likes = result.likes_count;
+        p.reaction = result.reaction;
         renderFeed();
-        toast(`Reacted with ${label}!`);
+        toast(`Reacted with ${REACTION_LABELS[type]} ${REACTION_EMOJIS[type]}`);
     } catch (error) {
         toast(error.message);
     }
@@ -4637,10 +5193,16 @@ function replyToComment(postId, author) {
 function togglePostDropdown(e, id) {
     e.stopPropagation();
     document.querySelectorAll('.post-dropdown').forEach(d => {
-        if (d.id !== `dropdown-${id}`) d.classList.remove('open');
+        if (d.id !== `dropdown-${id}`) {
+            d.classList.remove('open');
+            d.closest('.post')?.classList.remove('post-menu-open');
+        }
     });
     const dd = document.getElementById(`dropdown-${id}`);
-    if (dd) dd.classList.toggle('open');
+    if (dd) {
+        const isOpen = dd.classList.toggle('open');
+        dd.closest('.post')?.classList.toggle('post-menu-open', isOpen);
+    }
 }
 
 function toggleSavePost(id) {
@@ -4659,6 +5221,11 @@ function toggleSavePost(id) {
 
 async function deletePost(id) {
     if (!requireSignedIn()) return;
+    const post = getPosts().find(item => Number(item.id) === Number(id));
+    if (!post || !post.isOwn) {
+        toast('You can only delete your own posts.');
+        return;
+    }
     if (!confirm('Are you sure you want to delete this post?')) return;
     try {
         await postsApi('posts', { method: 'DELETE', body: { post_id: id } });
@@ -4869,14 +5436,14 @@ function playSimulatedVideo(el, title) {
 
 function openMemberProfile(userId) {
     if (!userId) {
-        location.href = 'profile.html';
+        navigatePersistentPage('profile.html');
         return;
     }
     if (!Number.isSafeInteger(Number(userId))) {
         toast('This demo profile is not linked to a registered account yet.');
         return;
     }
-    location.href = `profile.html?user_id=${encodeURIComponent(userId)}`;
+    navigatePersistentPage(`profile.html?user_id=${encodeURIComponent(userId)}`);
 }
 
 async function openGroupsModal() {

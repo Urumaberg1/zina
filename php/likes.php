@@ -31,6 +31,15 @@ function toggleLike() {
     if (!$postId) {
         jsonResponse(['error' => 'Post ID is required.'], 400);
     }
+    $reaction = $data['reaction'] ?? null;
+    $allowedReactions = [
+        'like', 'love', 'haha', 'wow', 'sad', 'angry', 'celebrate', 'clap', 'fire',
+        'think', 'smile', 'laugh', 'cry', 'cool', 'party', 'pray', 'hundred',
+        'eyes', 'heart_eyes', 'wink', 'grin', 'hug', 'rocket', 'sparkles'
+    ];
+    if ($reaction !== null && (!is_string($reaction) || !in_array($reaction, $allowedReactions, true))) {
+        jsonResponse(['error' => 'Choose a valid post reaction.'], 400);
+    }
 
     $conn = initDatabase();
     $stmt = $conn->prepare('SELECT id FROM posts WHERE id = ?');
@@ -39,21 +48,33 @@ function toggleLike() {
         jsonResponse(['error' => 'Post not found.'], 404);
     }
 
-    $stmt = $conn->prepare('INSERT IGNORE INTO likes (user_id, post_id) VALUES (?, ?)');
-    $stmt->execute([$userId, $postId]);
-    if ($stmt->rowCount() === 0) {
-        $stmt = $conn->prepare('DELETE FROM likes WHERE user_id = ? AND post_id = ?');
-        $stmt->execute([$userId, $postId]);
-        $liked = false;
-    } else {
+    if ($reaction !== null) {
+        $stmt = $conn->prepare('
+            INSERT INTO likes (user_id, post_id, reaction) VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE reaction = VALUES(reaction)
+        ');
+        $stmt->execute([$userId, $postId, $reaction]);
         $liked = true;
+    } else {
+        $stmt = $conn->prepare('INSERT IGNORE INTO likes (user_id, post_id) VALUES (?, ?)');
+        $stmt->execute([$userId, $postId]);
+        if ($stmt->rowCount() === 0) {
+            $stmt = $conn->prepare('DELETE FROM likes WHERE user_id = ? AND post_id = ?');
+            $stmt->execute([$userId, $postId]);
+            $liked = false;
+        } else {
+            $liked = true;
+        }
     }
 
     $stmt = $conn->prepare('SELECT COUNT(*) AS count FROM likes WHERE post_id = ?');
     $stmt->execute([$postId]);
     jsonResponse([
         'liked' => $liked,
-        'likes_count' => (int)$stmt->fetch()['count']
+        'likes_count' => (int)$stmt->fetch()['count'],
+        'reaction' => $liked
+            ? ($reaction ?? 'like')
+            : null
     ]);
 }
 

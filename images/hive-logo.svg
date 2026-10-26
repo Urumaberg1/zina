@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <defs>
+    <linearGradient id="hive-cell-gradient" x1="12" y1="7" x2="30" y2="31" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67e8f9"/>
+      <stop offset=".45" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="hive-cell-side" x1="8" y1="8" x2="32" y2="33" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#bfdbfe"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="hive-facet-light" x1="14" y1="12" x2="26" y2="20" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff" stop-opacity=".78"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".08"/>
+    </linearGradient>
+  </defs>
+  <g stroke="url(#hive-cell-side)" stroke-width="1.35" stroke-linejoin="round">
+    <path d="M12 3.5 18.5 7.25v7.5L12 18.5l-6.5-3.75v-7.5L12 3.5Z" fill="#60a5fa" fill-opacity=".18"/>
+    <path d="M28 3.5 34.5 7.25v7.5L28 18.5l-6.5-3.75v-7.5L28 3.5Z" fill="#8b5cf6" fill-opacity=".2"/>
+    <path d="M12 21.5 18.5 25.25v7.5L12 36.5l-6.5-3.75v-7.5L12 21.5Z" fill="#8b5cf6" fill-opacity=".2"/>
+    <path d="M28 21.5 34.5 25.25v7.5L28 36.5l-6.5-3.75v-7.5L28 21.5Z" fill="#ec4899" fill-opacity=".16"/>
+  </g>
+  <path d="M20 10.5 28.25 15.25v9.5L20 29.5l-8.25-4.75v-9.5L20 10.5Z" fill="url(#hive-cell-gradient)" stroke="#e0e7ff" stroke-width="1.2" stroke-linejoin="round"/>
+  <path d="m20 10.5 8.25 4.75L20 20l-8.25-4.75L20 10.5Z" fill="url(#hive-facet-light)"/>
+  <path d="M20 20v9.5l8.25-4.75v-9.5L20 20Z" fill="#312e81" fill-opacity=".2"/>
+  <path d="M20 20v9.5l-8.25-4.75v-9.5L20 20Z" fill="#fff" fill-opacity=".12"/>
+</svg>

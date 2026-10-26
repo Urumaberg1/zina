@@ -300,11 +300,22 @@ try {
         }
 
         $stmt = $conn->prepare("SELECT u.id, u.username, u.display_name, u.avatar,
-                COUNT(m.id) AS unread_count, MAX(m.id) AS latest_id, MAX(m.created_at) AS created_at
-            FROM messages m JOIN users u ON u.id = m.sender_id
-            WHERE m.receiver_id = ? AND m.read_at IS NULL
-            GROUP BY u.id, u.username, u.display_name, u.avatar
-            ORDER BY latest_id DESC LIMIT 20");
+                unread.unread_count, latest.created_at,
+                CASE
+                    WHEN latest.deleted_at IS NOT NULL THEN 'Message deleted'
+                    WHEN latest.content <> '' THEN latest.content
+                    WHEN latest.attachment_type IS NOT NULL THEN CONCAT('Sent a ', latest.attachment_type)
+                    ELSE 'Sent an attachment'
+                END AS preview
+            FROM (
+                SELECT sender_id, COUNT(*) AS unread_count, MAX(id) AS latest_id
+                FROM messages
+                WHERE receiver_id = ? AND read_at IS NULL
+                GROUP BY sender_id
+            ) unread
+            JOIN messages latest ON latest.id = unread.latest_id
+            JOIN users u ON u.id = unread.sender_id
+            ORDER BY latest.id DESC LIMIT 20");
         $stmt->execute([$userId]);
         foreach ($stmt->fetchAll() as $row) {
             $count = (int)$row['unread_count'];
@@ -312,6 +323,7 @@ try {
                 'type' => 'message', 'user_id' => (int)$row['id'],
                 'username' => $row['username'], 'display_name' => $row['display_name'],
                 'avatar' => $row['avatar'],
+                'unread_count' => $count, 'preview' => $row['preview'],
                 'text' => 'sent you ' . $count . ' unread message' . ($count === 1 ? '' : 's'),
                 'created_at' => $row['created_at']
             ];

@@ -85,11 +85,15 @@ function initDatabase() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         post_id INT NOT NULL,
+        reaction VARCHAR(16) NOT NULL DEFAULT 'like',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY unique_like (user_id, post_id),
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
     )");
+    if (!$conn->query("SHOW COLUMNS FROM likes LIKE 'reaction'")->fetch()) {
+        $conn->exec("ALTER TABLE likes ADD reaction VARCHAR(16) NOT NULL DEFAULT 'like'");
+    }
     
     // Comments table
     $conn->exec("CREATE TABLE IF NOT EXISTS comments (
@@ -147,6 +151,16 @@ function initDatabase() {
         INDEX group_conversation_lookup (group_id, id),
         FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+    $conn->exec("CREATE TABLE IF NOT EXISTS message_reactions (
+        message_id INT NOT NULL,
+        user_id INT NOT NULL,
+        reaction VARCHAR(16) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (message_id, user_id),
+        INDEX message_reaction_lookup (message_id, reaction),
+        FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )");
 
     $conn->exec("CREATE TABLE IF NOT EXISTS chat_groups (
